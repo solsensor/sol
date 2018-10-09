@@ -1,0 +1,6 @@
+[package]
+name = "sol"
+version = "0.1.0"
+authors = ["Ryan Chipman <ryan@ryanchipman.com>"]
+
+[dependencies]
