@@ -6,11 +6,10 @@
   </head>
   <body>
     <h1>{{title}}</h1>
-	<p>This page shows the currently registered users</p>
+	<p>This page shows details about the user "{{user.email}}"</p>
 	<ul>
-	  {{#each users}}
-	  <li><a href="/user/{{email}}">{{email}}</a></li>
-	  {{/each}}
+	  <li>id: {{user.id}}</li>
+	  <li>email address: {{user.email}}</li>
 	</ul>
   </body>
 </html>

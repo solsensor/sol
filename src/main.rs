@@ -27,6 +27,7 @@ use std::path::{Path, PathBuf};
 struct TemplateCtx {
     title: String,
     users: Option<Vec<UserQuery>>,
+    user: Option<UserQuery>,
 }
 
 #[get("/")]
@@ -34,6 +35,7 @@ fn index() -> Template {
     let ctx = TemplateCtx{
         title: String::from("Home"),
         users: None,
+        user:None,
     };
     Template::render("index", &ctx)
 }
@@ -43,9 +45,21 @@ fn users(conn: db::Conn) -> Template {
     let users = User::all(conn.handler()).ok();
     let ctx = TemplateCtx{
         title: String::from("Users"),
+        user: None,
         users,
     };
     Template::render("users", &ctx)
+}
+
+#[get("/user/<email>")]
+fn user(email: String, conn: db::Conn) -> Template {
+    let user = User::by_email(&email, conn.handler()).ok();
+    let ctx = TemplateCtx{
+        title: email,
+        users: None,
+        user,
+    };
+    Template::render("user", &ctx)
 }
 
 #[get("/<path..>")]
@@ -75,7 +89,7 @@ fn get_users(conn: db::Conn) -> String {
 fn rocket() -> Rocket {
     rocket::ignite()
         .manage(db::init_pool())
-        .mount("/", routes![index,users])
+        .mount("/", routes![index,users,user])
         .mount("/static", routes![files])
         .mount("/api", routes![add_user,get_users])
         .attach(Template::fairing())
