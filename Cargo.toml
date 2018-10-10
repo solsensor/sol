@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["Ryan Chipman <ryan@ryanchipman.com>"]
 
 [dependencies]
+rand = "0.5"
 rocket = "0.3.17"
 rocket_codegen = "0.3.17"
 rocket_contrib = { version = "0.3.17", features = ["handlebars_templates"] }
