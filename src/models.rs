@@ -3,7 +3,7 @@ use diesel::prelude::*;
 use std::error::Error;
 use super::schema::users;
 
-#[derive(Insertable, Serialize, Deserialize)]
+#[derive(Insertable, Serialize, Deserialize, FromForm)]
 #[table_name = "users"]
 pub struct UserInsert {
     pub id: Option<i32>,
@@ -29,7 +29,7 @@ impl User {
         all_users.filter(user_email.eq(email)).first(conn)
     }
 
-    pub fn insert(user: UserInsert, conn: &SqliteConnection) -> Result<usize, impl Error> {
+    pub fn insert(user: &UserInsert, conn: &SqliteConnection) -> Result<usize, impl Error> {
         use super::schema::users::{table as users_table};
         insert_into(users_table).values(user).execute(conn)
     }
