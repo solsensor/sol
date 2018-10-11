@@ -71,7 +71,7 @@ fn user(email: String, conn: db::Conn) -> Template {
 #[get("/register")]
 fn register() -> Template {
     let ctx = TemplateCtx {
-        title: String::from("register"),
+        title: String::from("Register"),
         user: None,
         users: None,
     };

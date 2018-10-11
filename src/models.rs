@@ -8,6 +8,7 @@ use super::schema::{tokens,users};
 pub struct UserInsert {
     pub id: Option<i32>,
     pub email: String,
+    pub password: String,
 }
 
 #[derive(Serialize, Queryable, Debug)]
