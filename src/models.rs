@@ -31,6 +31,17 @@ impl User {
         all_users.filter(user_email.eq(email)).first(conn)
     }
 
+    pub fn verify_password(email: &String, password: &String, conn: &SqliteConnection) -> Result<UserQuery, String> {
+        match Self::by_email(email, conn) {
+            Ok(user) => if &user.password == password {
+                    Ok(user)
+                } else {
+                    Err(format!("incorrect password"))
+                },
+            Err(err) => Err(format!("failed to get user: {}", err.to_string())),
+        }
+    }
+
     pub fn insert(user: &UserInsert, conn: &SqliteConnection) -> Result<usize, impl Error> {
         use super::schema::users::{table as users_table};
         insert_into(users_table).values(user).execute(conn)

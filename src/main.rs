@@ -68,6 +68,26 @@ fn user(email: String, conn: db::Conn) -> Template {
     Template::render("user", &ctx)
 }
 
+#[get("/login")]
+fn login() -> Template {
+    let ctx = TemplateCtx {
+        title: String::from("Login"),
+        user: None,
+        users: None,
+    };
+    Template::render("login", &ctx)
+}
+
+#[post("/login", data = "<creds>")]
+fn login_post(creds: Form<EmailPassword>, conn: db::Conn) -> Result<Redirect, String> {
+    let creds = creds.get();
+    let res = User::verify_password(&creds.email, &creds.password, conn.handler());
+    match res {
+        Ok(_user) => Ok(Redirect::to(&format!("/user/{}", creds.email))), // TODO set cookie or something
+        Err(err) => Err(err),
+    }
+}
+
 #[get("/register")]
 fn register() -> Template {
     let ctx = TemplateCtx {
@@ -135,7 +155,7 @@ fn get_token(auth: PasswordAuth, conn: db::Conn) -> String {
 
 struct PasswordAuth(UserQuery);
 
-#[derive(Deserialize)]
+#[derive(Deserialize, FromForm)]
 struct EmailPassword {
     email: String,
     password: String,
@@ -149,11 +169,11 @@ impl FromData for PasswordAuth {
         let login = login.into_inner();
 
         let conn: db::Conn = req.guard().unwrap();
-        let user = User::by_email(&login.email, conn.handler()).expect("could not find user");
+        let res = User::verify_password(&login.email, &login.password, conn.handler());
 
-        match login.password == user.password {
-            true  => Outcome::Success(PasswordAuth(user)),
-            false => Outcome::Failure((Status::Unauthorized, String::from("Incorrect password")))
+        match res {
+            Ok(user)  => Outcome::Success(PasswordAuth(user)),
+            Err(err) => Outcome::Failure((Status::Unauthorized, err))
         }
     }
 }
@@ -192,9 +212,22 @@ fn private(auth: TokenAuth) -> String {
 fn rocket() -> Rocket {
     rocket::ignite()
         .manage(db::init_pool())
-        .mount("/", routes![index,users,user,register,register_post])
+        .mount("/", routes![
+            index,
+            users,
+            user,
+            register,
+            register_post,
+            login,
+            login_post,
+        ])
+        .mount("/api", routes![
+            add_user,
+            get_users,
+            get_token,
+            private,
+        ])
         .mount("/static", routes![files])
-        .mount("/api", routes![add_user,get_users,get_token,private])
         .attach(Template::fairing())
 }
 
