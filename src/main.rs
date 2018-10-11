@@ -151,8 +151,10 @@ impl FromData for PasswordAuth {
         let conn: db::Conn = req.guard().unwrap();
         let user = User::by_email(&login.email, conn.handler()).expect("could not find user");
 
-        Outcome::Success(PasswordAuth(user))
-        //Outcome::Failure((Status::Unauthorized, String::from("Not fully implemented")))
+        match login.password == user.password {
+            true  => Outcome::Success(PasswordAuth(user)),
+            false => Outcome::Failure((Status::Unauthorized, String::from("Incorrect password")))
+        }
     }
 }
 

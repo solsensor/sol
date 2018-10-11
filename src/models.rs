@@ -14,6 +14,7 @@ pub struct UserInsert {
 pub struct UserQuery {
     pub id: i32,
     pub email: String,
+    pub password: String,
 }
 
 pub struct User();
