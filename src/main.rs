@@ -21,6 +21,7 @@ use rand::Rng;
 
 use rocket::{Rocket,Outcome,Request};
 use rocket::http::Status;
+use rocket::data::{self,FromData,Data};
 use rocket::request::{Form,FromRequest};
 use rocket::response::{NamedFile,Redirect};
 use rocket_contrib::{Json, Template, Value};
@@ -111,15 +112,9 @@ fn get_users(conn: db::Conn) -> String {
     format!("all users: {:?}", User::all(conn.handler()).unwrap())
 }
 
-#[derive(Deserialize)]
-struct Email {
-    email: String,
-}
-
-#[post("/login", format = "application/json", data = "<data>")]
-fn get_token(data: Json<Email>, conn: db::Conn) -> String {
-    let email = data.0.email;
-    let user = User::by_email(&email, conn.handler()).unwrap();
+#[post("/login", format = "application/json", data = "<auth>")]
+fn get_token(auth: PasswordAuth, conn: db::Conn) -> String {
+    let user = auth.0;
 
     let mut rng = rand::thread_rng();
     let token_str: String = iter::repeat(())
@@ -135,6 +130,29 @@ fn get_token(data: Json<Email>, conn: db::Conn) -> String {
     match res {
         Ok(_count) => token_str,
         Err(err) => format!("failed: {}", err.to_string())
+    }
+}
+
+struct PasswordAuth(UserQuery);
+
+#[derive(Deserialize)]
+struct EmailPassword {
+    email: String,
+    password: String,
+}
+
+impl FromData for PasswordAuth {
+    type Error = String;
+    fn from_data(req: &Request, data: Data) -> data::Outcome<Self, String> {
+
+        let login: Json<EmailPassword> = Json::from_data(req, data).unwrap();
+        let login = login.into_inner();
+
+        let conn: db::Conn = req.guard().unwrap();
+        let user = User::by_email(&login.email, conn.handler()).expect("could not find user");
+
+        Outcome::Success(PasswordAuth(user))
+        //Outcome::Failure((Status::Unauthorized, String::from("Not fully implemented")))
     }
 }
 
