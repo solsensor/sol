@@ -9,7 +9,10 @@ table! {
 table! {
     tokens (token) {
         token -> Text,
-        user_id -> Integer,
+        #[sql_name = "type"]
+        type_ -> Text,
+        user_id -> Nullable<Integer>,
+        sensor_id -> Nullable<Integer>,
     }
 }
 
