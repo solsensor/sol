@@ -16,8 +16,7 @@ mod schema;
 
 use models::{User, UserInsert, UserQuery};
 use models::{Token, TokenInsert, TokenQuery};
-
-use rand::Rng;
+use models::{Sensor, SensorInsert, SensorQuery};
 
 use rocket::{Rocket,Outcome,Request};
 use rocket::http::Status;
@@ -26,7 +25,6 @@ use rocket::request::{Form,FromRequest};
 use rocket::response::{NamedFile,Redirect};
 use rocket_contrib::{Json, Template, Value};
 
-use std::iter;
 use std::path::{Path, PathBuf};
 
 #[derive(Serialize)]
@@ -132,23 +130,13 @@ fn get_users(conn: db::Conn) -> String {
     format!("all users: {:?}", User::all(conn.handler()).unwrap())
 }
 
-#[post("/login", format = "application/json", data = "<auth>")]
+#[post("/token", format = "application/json", data = "<auth>")]
 fn get_token(auth: PasswordAuth, conn: db::Conn) -> String {
     let user = auth.0;
-
-    let mut rng = rand::thread_rng();
-    let token_str: String = iter::repeat(())
-        .map(|()| rng.sample(rand::distributions::Alphanumeric))
-        .take(64)
-        .collect();
-
-    let token = TokenInsert{
-        token: token_str.clone(),
-        user_id: user.id
-    };
+    let token = Token::new_user_token(user);
     let res = Token::insert(&token, conn.handler());
     match res {
-        Ok(_count) => token_str,
+        Ok(_count) => token.token,
         Err(err) => format!("failed: {}", err.to_string())
     }
 }
@@ -204,6 +192,46 @@ impl<'a, 'r> FromRequest<'a, 'r> for TokenAuth {
     }
 }
 
+struct UserTokenAuth(UserQuery);
+impl<'a, 'r> FromRequest<'a, 'r> for UserTokenAuth {
+    type Error = String;
+    fn from_request(req: &'a Request<'r>) -> Outcome<Self, (Status, String), ()> {
+
+        let token: TokenAuth = req.guard()?;
+        let user_id = token.0.user_id;
+
+        let conn: db::Conn = req.guard().unwrap();
+        match User::by_id(user_id, conn.handler()) {
+            Ok(user) => Outcome::Success(UserTokenAuth(user)),
+            Err(_err) => Outcome::Failure((Status::Unauthorized, format!("could not find user for token"))),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+struct CreateSensor {
+    hardware_id: i32,
+}
+
+#[post("/add_sensor", format = "application/json", data = "<data>")]
+fn add_sensor(auth: UserTokenAuth, data: Json<CreateSensor>, conn: db::Conn) -> String {
+    let sensor = SensorInsert{
+        owner_id: auth.0.id,
+        hardware_id: data.hardware_id,
+    };
+    match Sensor::insert(&sensor, conn.handler()) {
+        Ok(_) => format!("success!"),
+        Err(err) => format!("err: {}", err.to_string()),
+    }
+}
+
+#[post("/sensor_token")]
+fn sensor_token(auth: UserTokenAuth, conn: db::Conn) -> String {
+    let user = auth.0;
+    String::from("TODO")
+}
+
+
 #[get("/private")]
 fn private(auth: TokenAuth) -> String {
     format!("Got private data for user with id {} using token \"{}\"", auth.0.user_id, auth.0.token)
@@ -226,6 +254,8 @@ fn rocket() -> Rocket {
             get_users,
             get_token,
             private,
+            sensor_token,
+            add_sensor,
         ])
         .mount("/static", routes![files])
         .attach(Template::fairing())
