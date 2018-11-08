@@ -130,7 +130,10 @@ fn add_user(user: Json<UserInsert>, conn: db::Conn) -> Json<Value> {
 
 #[get("/users/all")]
 fn get_users(conn: db::Conn) -> String {
-    format!("all users: {:?}", User::all(conn.handler()).unwrap())
+    format!(
+        "all users: {:?}",
+        User::all(conn.handler()).expect("failed to get all users")
+    )
 }
 
 #[post(
@@ -175,10 +178,11 @@ struct EmailPassword {
 impl FromData for PasswordAuth {
     type Error = String;
     fn from_data(req: &Request, data: Data) -> data::Outcome<Self, String> {
-        let login: Json<EmailPassword> = Json::from_data(req, data).unwrap();
+        let login: Json<EmailPassword> =
+            Json::from_data(req, data).expect("failed to turn data into json");
         let login = login.into_inner();
 
-        let conn: db::Conn = req.guard().unwrap();
+        let conn: db::Conn = req.guard().expect("the request guard failed");
         let res = User::verify_password(&login.email, &login.password, conn.handler());
 
         match res {
@@ -207,8 +211,8 @@ impl<'a, 'r> FromRequest<'a, 'r> for TokenAuth {
             return Outcome::Failure((Status::Unauthorized, String::from("Malformed Token")));
         }
 
-        let conn: db::Conn = req.guard().unwrap();
-        let tok = Token::find(&words[1], conn.handler()).unwrap();
+        let conn: db::Conn = req.guard().expect("req guard failed");
+        let tok = Token::find(&words[1], conn.handler()).expect("could not find token");
 
         Outcome::Success(TokenAuth(tok))
     }
@@ -227,8 +231,8 @@ impl<'a, 'r> FromRequest<'a, 'r> for UserTokenAuth {
                 format!("expected user token, got sensor token"),
             )),
             TokenType::User => {
-                let conn: db::Conn = req.guard().unwrap();
-                let user_id = token.user_id.unwrap();
+                let conn: db::Conn = req.guard().expect("request guard failed");
+                let user_id = token.user_id.expect("token had no user id");
                 match User::by_id(user_id, conn.handler()) {
                     Ok(user) => Outcome::Success(UserTokenAuth(user)),
                     Err(_err) => Outcome::Failure((
@@ -262,7 +266,7 @@ fn add_sensor(auth: UserTokenAuth, data: Json<CreateSensor>, conn: db::Conn) -> 
 fn private(auth: TokenAuth) -> String {
     format!(
         "Got private data for user with id {} using token \"{}\"",
-        auth.0.user_id.unwrap(),
+        auth.0.user_id.expect("user had no id"),
         auth.0.token
     )
 }
