@@ -18,8 +18,8 @@ mod models;
 mod schema;
 
 use models::{
-    Reading, ReadingInsert, Sensor, SensorInsert, SensorQuery, Token, TokenQuery, TokenType, User,
-    UserInsert, UserQuery,
+    Reading, ReadingInsert, ReadingQuery, Sensor, SensorInsert, SensorQuery, Token, TokenQuery,
+    TokenType, User, UserInsert, UserQuery,
 };
 use rocket::{
     data::{self, Data, FromData},
@@ -37,6 +37,9 @@ struct TemplateCtx {
     title: String,
     users: Option<Vec<UserQuery>>,
     user: Option<UserQuery>,
+    sensors: Option<Vec<SensorQuery>>,
+    sensor: Option<SensorQuery>,
+    readings: Option<Vec<ReadingQuery>>,
 }
 
 #[get("/")]
@@ -45,6 +48,9 @@ fn index() -> Template {
         title: String::from("Home"),
         users: None,
         user: None,
+        sensors: None,
+        sensor: None,
+        readings: None,
     };
     Template::render("index", &ctx)
 }
@@ -56,19 +62,41 @@ fn users(conn: db::Conn) -> Template {
         title: String::from("Users"),
         user: None,
         users,
+        sensors: None,
+        sensor: None,
+        readings: None,
     };
     Template::render("users", &ctx)
 }
 
 #[get("/user/<email>")]
 fn user(email: String, conn: db::Conn) -> Template {
-    let user = User::by_email(&email, conn.handler()).ok();
+    let user = User::by_email(&email, conn.handler()).unwrap();
+    let sensors = Sensor::find_for_user(user.id, conn.handler()).ok();
     let ctx = TemplateCtx {
         title: email,
         users: None,
-        user,
+        user: Some(user),
+        sensors,
+        sensor: None,
+        readings: None,
     };
     Template::render("user", &ctx)
+}
+
+#[get("/sensor/<id>")]
+fn sensor(id: i32, conn: db::Conn) -> Template {
+    let sensor = Sensor::find(id, conn.handler()).unwrap();
+    let readings = Reading::find_for_sensor(sensor.id, conn.handler()).ok();
+    let ctx = TemplateCtx {
+        title: format!("sensor {}", id),
+        users: None,
+        user: None,
+        sensors: None,
+        sensor: Some(sensor),
+        readings,
+    };
+    Template::render("sensor", &ctx)
 }
 
 #[get("/login")]
@@ -77,6 +105,9 @@ fn login() -> Template {
         title: String::from("Login"),
         user: None,
         users: None,
+        sensors: None,
+        sensor: None,
+        readings: None,
     };
     Template::render("login", &ctx)
 }
@@ -97,6 +128,9 @@ fn register() -> Template {
         title: String::from("Register"),
         user: None,
         users: None,
+        sensors: None,
+        sensor: None,
+        readings: None,
     };
     Template::render("register", &ctx)
 }
@@ -335,6 +369,7 @@ fn rocket() -> Rocket {
                 register_post,
                 login,
                 login_post,
+                sensor,
             ],
         )
         .mount(

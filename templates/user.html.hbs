@@ -10,6 +10,14 @@
 	<ul>
 	  <li>id: {{user.id}}</li>
 	  <li>email address: {{user.email}}</li>
+	  <li>
+		sensors:
+		<ul>
+		  {{#each sensors}}
+		  <li><a href="/sensor/{{id}}">{{id}}</a></li>
+		  {{/each}}
+		</ul>
+	  </li>
 	</ul>
   </body>
 </html>

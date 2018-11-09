@@ -13,12 +13,31 @@ pub struct ReadingInsert {
     pub sensor_id: i32,
 }
 
+#[derive(Serialize, Queryable, Debug)]
+pub struct ReadingQuery {
+    pub id: i32,
+    pub voltage: f32,
+    pub sensor_id: i32,
+}
+
 pub struct Reading;
 
 impl Reading {
     pub fn insert(reading: &ReadingInsert, conn: &SqliteConnection) -> Result<usize, impl Error> {
         use super::schema::readings::table as readings_table;
         insert_into(readings_table).values(reading).execute(conn)
+    }
+
+    pub fn find_for_sensor(
+        sensor_id: i32,
+        conn: &SqliteConnection,
+    ) -> Result<Vec<ReadingQuery>, impl Error> {
+        use super::schema::readings::dsl::{
+            readings as all_readings, sensor_id as reading_sensor_id,
+        };
+        all_readings
+            .filter(reading_sensor_id.eq(sensor_id))
+            .load(conn)
     }
 }
 
@@ -179,6 +198,14 @@ impl Sensor {
     pub fn find(id: i32, conn: &SqliteConnection) -> Result<SensorQuery, impl Error> {
         use super::schema::sensors::dsl::{id as sensor_id, sensors as all_sensors};
         all_sensors.filter(sensor_id.eq(id)).first(conn)
+    }
+
+    pub fn find_for_user(
+        user_id: i32,
+        conn: &SqliteConnection,
+    ) -> Result<Vec<SensorQuery>, impl Error> {
+        use super::schema::sensors::dsl::{owner_id as sensor_owner_id, sensors as all_sensors};
+        all_sensors.filter(sensor_owner_id.eq(user_id)).load(conn)
     }
 
     pub fn insert(sensor: &SensorInsert, conn: &SqliteConnection) -> Result<usize, impl Error> {
