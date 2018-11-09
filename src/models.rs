@@ -1,9 +1,26 @@
-use super::schema::{sensors, tokens, users};
+use super::schema::{readings, sensors, tokens, users};
 use diesel::insert_into;
 use diesel::prelude::*;
 use rand::Rng;
 use std::error::Error;
 use std::iter;
+
+#[derive(Insertable, Serialize, Deserialize)]
+#[table_name = "readings"]
+pub struct ReadingInsert {
+    pub id: Option<i32>,
+    pub voltage: f32,
+    pub sensor_id: i32,
+}
+
+pub struct Reading;
+
+impl Reading {
+    pub fn insert(reading: &ReadingInsert, conn: &SqliteConnection) -> Result<usize, impl Error> {
+        use super::schema::readings::table as readings_table;
+        insert_into(readings_table).values(reading).execute(conn)
+    }
+}
 
 #[derive(Insertable, Serialize, Deserialize, FromForm)]
 #[table_name = "users"]
@@ -20,7 +37,7 @@ pub struct UserQuery {
     pub password: String,
 }
 
-pub struct User();
+pub struct User;
 
 impl User {
     pub fn all(conn: &SqliteConnection) -> Result<Vec<UserQuery>, impl Error> {
@@ -102,7 +119,7 @@ pub struct TokenQuery {
     pub sensor_id: Option<i32>,
 }
 
-pub struct Token();
+pub struct Token;
 
 impl Token {
     fn rand_str() -> String {
@@ -156,7 +173,7 @@ pub struct SensorQuery {
     pub hardware_id: i32,
 }
 
-pub struct Sensor();
+pub struct Sensor;
 
 impl Sensor {
     pub fn find(id: i32, conn: &SqliteConnection) -> Result<SensorQuery, impl Error> {

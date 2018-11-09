@@ -17,15 +17,17 @@ mod db;
 mod models;
 mod schema;
 
-use models::{Sensor, SensorInsert, SensorQuery};
-use models::{Token, TokenQuery, TokenType};
-use models::{User, UserInsert, UserQuery};
-
-use rocket::data::{self, Data, FromData};
-use rocket::http::Status;
-use rocket::request::{Form, FromRequest};
-use rocket::response::{NamedFile, Redirect};
-use rocket::{Outcome, Request, Rocket};
+use models::{
+    Reading, ReadingInsert, Sensor, SensorInsert, SensorQuery, Token, TokenQuery, TokenType, User,
+    UserInsert, UserQuery,
+};
+use rocket::{
+    data::{self, Data, FromData},
+    http::Status,
+    request::{Form, FromRequest},
+    response::{NamedFile, Redirect},
+    Outcome, Request, Rocket,
+};
 use rocket_contrib::{Json, Template, Value};
 
 use std::path::{Path, PathBuf};
@@ -156,6 +158,28 @@ fn get_sensor_token(auth: UserTokenAuth, conn: db::Conn, sensor: Json<SensorQuer
     }
 }
 
+#[derive(Serialize, Deserialize)]
+struct CreateReading {
+    voltage: f32,
+}
+
+#[post(
+    "/add_reading",
+    format = "application/json",
+    data = "<reading>"
+)]
+fn add_reading(auth: SensorTokenAuth, conn: db::Conn, reading: Json<CreateReading>) -> String {
+    let reading = ReadingInsert {
+        id: None,
+        voltage: reading.0.voltage,
+        sensor_id: auth.0.id,
+    };
+    match Reading::insert(&reading, conn.handler()) {
+        Ok(_) => format!("success!"),
+        Err(err) => format!("err: {}", err.to_string()),
+    }
+}
+
 #[post("/token", format = "application/json", data = "<auth>")]
 fn get_token(auth: PasswordAuth, conn: db::Conn) -> String {
     let user = auth.0;
@@ -215,6 +239,33 @@ impl<'a, 'r> FromRequest<'a, 'r> for TokenAuth {
         let tok = Token::find(&words[1], conn.handler()).expect("could not find token");
 
         Outcome::Success(TokenAuth(tok))
+    }
+}
+
+struct SensorTokenAuth(SensorQuery);
+impl<'a, 'r> FromRequest<'a, 'r> for SensorTokenAuth {
+    type Error = String;
+    fn from_request(req: &'a Request<'r>) -> Outcome<Self, (Status, String), ()> {
+        let token: TokenAuth = req.guard()?;
+        let token = token.0;
+
+        match TokenType::from_string(token.type_) {
+            TokenType::User => Outcome::Failure((
+                Status::Unauthorized,
+                format!("expected sensor token, got user token"),
+            )),
+            TokenType::Sensor => {
+                let conn: db::Conn = req.guard().expect("request guard failed");
+                let sensor_id = token.sensor_id.expect("token had no sensor id");
+                match Sensor::find(sensor_id, conn.handler()) {
+                    Ok(sensor) => Outcome::Success(SensorTokenAuth(sensor)),
+                    Err(_err) => Outcome::Failure((
+                        Status::Unauthorized,
+                        format!("could not find sensor for token"),
+                    )),
+                }
+            }
+        }
     }
 }
 
@@ -295,6 +346,7 @@ fn rocket() -> Rocket {
                 private,
                 get_sensor_token,
                 add_sensor,
+                add_reading,
             ],
         )
         .mount("/static", routes![files])
