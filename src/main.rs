@@ -1,19 +1,20 @@
 #![feature(plugin)]
 #![feature(custom_attribute)]
 #![feature(custom_derive)]
-#![plugin(rocket_codegen)]
 #![allow(proc_macro_derive_resolution_fallback)]
+#![feature(proc_macro_hygiene, decl_macro)]
 
+extern crate base64;
 extern crate rand;
+#[macro_use]
 extern crate rocket;
 #[macro_use]
 extern crate rocket_contrib;
 #[macro_use]
-extern crate diesel;
-#[macro_use]
 extern crate serde_derive;
+#[macro_use]
+extern crate diesel;
 
-mod db;
 mod models;
 mod schema;
 
@@ -22,15 +23,22 @@ use models::{
     TokenType, User, UserInsert, UserQuery,
 };
 use rocket::{
-    data::{self, Data, FromData},
+    get,
     http::Status,
+    post,
     request::{Form, FromRequest},
     response::{NamedFile, Redirect},
-    Outcome, Request, Rocket,
+    routes, Outcome, Request, Rocket,
 };
-use rocket_contrib::{Json, Template, Value};
+use rocket_contrib::{
+    json::{Json, JsonValue},
+    templates::Template,
+};
 
-use std::path::{Path, PathBuf};
+use std::{
+    path::{Path, PathBuf},
+    str::from_utf8,
+};
 
 #[derive(Serialize)]
 struct TemplateCtx {
@@ -56,8 +64,8 @@ fn index() -> Template {
 }
 
 #[get("/users")]
-fn users(conn: db::Conn) -> Template {
-    let users = User::all(conn.handler()).ok();
+fn users(conn: SolDbConn) -> Template {
+    let users = User::all(&conn).ok();
     let ctx = TemplateCtx {
         title: String::from("Users"),
         user: None,
@@ -70,9 +78,9 @@ fn users(conn: db::Conn) -> Template {
 }
 
 #[get("/user/<email>")]
-fn user(email: String, conn: db::Conn) -> Template {
-    let user = User::by_email(&email, conn.handler()).unwrap();
-    let sensors = Sensor::find_for_user(user.id, conn.handler()).ok();
+fn user(email: String, conn: SolDbConn) -> Template {
+    let user = User::by_email(&email, &conn).unwrap();
+    let sensors = Sensor::find_for_user(user.id, &conn).ok();
     let ctx = TemplateCtx {
         title: email,
         users: None,
@@ -85,9 +93,9 @@ fn user(email: String, conn: db::Conn) -> Template {
 }
 
 #[get("/sensor/<id>")]
-fn sensor(id: i32, conn: db::Conn) -> Template {
-    let sensor = Sensor::find(id, conn.handler()).unwrap();
-    let readings = Reading::find_for_sensor(sensor.id, conn.handler()).ok();
+fn sensor(id: i32, conn: SolDbConn) -> Template {
+    let sensor = Sensor::find(id, &conn).unwrap();
+    let readings = Reading::find_for_sensor(sensor.id, &conn).ok();
     let ctx = TemplateCtx {
         title: format!("sensor {}", id),
         users: None,
@@ -113,11 +121,11 @@ fn login() -> Template {
 }
 
 #[post("/login", data = "<creds>")]
-fn login_post(creds: Form<EmailPassword>, conn: db::Conn) -> Result<Redirect, String> {
-    let creds = creds.get();
-    let res = User::verify_password(&creds.email, &creds.password, conn.handler());
+fn login_post(creds: Form<EmailPassword>, conn: SolDbConn) -> Result<Redirect, String> {
+    let creds = creds.into_inner();
+    let res = User::verify_password(&creds.email, &creds.password, &conn);
     match res {
-        Ok(_user) => Ok(Redirect::to(&format!("/user/{}", creds.email))), // TODO set cookie or something
+        Ok(_user) => Ok(Redirect::to(uri!(user: creds.email))), // TODO set cookie or something
         Err(err) => Err(err),
     }
 }
@@ -136,11 +144,11 @@ fn register() -> Template {
 }
 
 #[post("/register", data = "<form>")]
-fn register_post(form: Form<UserInsert>, conn: db::Conn) -> Result<Redirect, String> {
-    let user = form.get();
-    let res = User::insert(user, conn.handler());
+fn register_post(form: Form<UserInsert>, conn: SolDbConn) -> Result<Redirect, String> {
+    let user = form.into_inner();
+    let res = User::insert(&user, &conn);
     match res {
-        Ok(_count) => Ok(Redirect::to(&format!("/user/{}", user.email))),
+        Ok(_count) => Ok(Redirect::to(uri!(user: user.email))),
         Err(err) => Err(err.to_string()),
     }
 }
@@ -151,38 +159,34 @@ fn files(path: PathBuf) -> Option<NamedFile> {
 }
 
 #[post("/users/new", format = "application/json", data = "<user>")]
-fn add_user(user: Json<UserInsert>, conn: db::Conn) -> Json<Value> {
-    let res = User::insert(&user.0, conn.handler());
+fn add_user(user: Json<UserInsert>, conn: SolDbConn) -> JsonValue {
+    let res = User::insert(&user.0, &conn);
     match res {
-        Ok(_count) => Json(json!({
+        Ok(_count) => json!({
             "status": "success",
-        })),
-        Err(err) => Json(json!({
+        }),
+        Err(err) => json!({
             "status": "failed",
             "reason": err.to_string()
-        })),
+        }),
     }
 }
 
 #[get("/users/all")]
-fn get_users(conn: db::Conn) -> String {
+fn get_users(conn: SolDbConn) -> String {
     format!(
         "all users: {:?}",
-        User::all(conn.handler()).expect("failed to get all users")
+        User::all(&conn).expect("failed to get all users")
     )
 }
 
-#[post(
-    "/sensor_token",
-    format = "application/json",
-    data = "<sensor>"
-)]
-fn get_sensor_token(auth: UserTokenAuth, conn: db::Conn, sensor: Json<SensorQuery>) -> String {
+#[post("/sensor_token", format = "application/json", data = "<sensor>")]
+fn get_sensor_token(auth: UserTokenAuth, conn: SolDbConn, sensor: Json<SensorQuery>) -> String {
     let user = auth.0;
     let sensor = sensor.0;
     if user.id == sensor.owner_id {
         let token = Token::new_sensor_token(sensor);
-        let res = Token::insert(&token, conn.handler());
+        let res = Token::insert(&token, &conn);
         match res {
             Ok(_count) => token.token,
             Err(err) => format!("failed: {}", err.to_string()),
@@ -197,28 +201,24 @@ struct CreateReading {
     voltage: f32,
 }
 
-#[post(
-    "/add_reading",
-    format = "application/json",
-    data = "<reading>"
-)]
-fn add_reading(auth: SensorTokenAuth, conn: db::Conn, reading: Json<CreateReading>) -> String {
+#[post("/add_reading", format = "application/json", data = "<reading>")]
+fn add_reading(auth: SensorTokenAuth, conn: SolDbConn, reading: Json<CreateReading>) -> String {
     let reading = ReadingInsert {
         id: None,
         voltage: reading.0.voltage,
         sensor_id: auth.0.id,
     };
-    match Reading::insert(&reading, conn.handler()) {
+    match Reading::insert(&reading, &conn) {
         Ok(_) => format!("success!"),
         Err(err) => format!("err: {}", err.to_string()),
     }
 }
 
-#[post("/token", format = "application/json", data = "<auth>")]
-fn get_token(auth: PasswordAuth, conn: db::Conn) -> String {
+#[post("/token")]
+fn get_token(auth: PasswordAuth, conn: SolDbConn) -> String {
     let user = auth.0;
     let token = Token::new_user_token(user);
-    let res = Token::insert(&token, conn.handler());
+    let res = Token::insert(&token, &conn);
     match res {
         Ok(_count) => token.token,
         Err(err) => format!("failed: {}", err.to_string()),
@@ -233,16 +233,39 @@ struct EmailPassword {
     password: String,
 }
 
-impl FromData for PasswordAuth {
+impl<'a, 'r> FromRequest<'a, 'r> for PasswordAuth {
     type Error = String;
-    fn from_data(req: &Request, data: Data) -> data::Outcome<Self, String> {
-        let login: Json<EmailPassword> =
-            Json::from_data(req, data).expect("failed to turn data into json");
-        let login = login.into_inner();
+    fn from_request(req: &'a Request<'r>) -> Outcome<Self, (Status, String), ()> {
+        let keys: Vec<_> = req.headers().get("Authorization").collect();
+        if keys.len() != 1 {
+            return Outcome::Failure((Status::Unauthorized, String::from("Missing Header")));
+        }
 
-        let conn: db::Conn = req.guard().expect("the request guard failed");
-        let res = User::verify_password(&login.email, &login.password, conn.handler());
+        let words: Vec<String> = keys[0]
+            .to_string()
+            .split_whitespace()
+            .map(String::from)
+            .collect();
+        if words.len() != 2 || words[0] != "Basic" {
+            return Outcome::Failure((Status::Unauthorized, String::from("Malformed Header")));
+        }
 
+        let bytes = base64::decode(&words[1]).expect("failed to base64-decode");
+        let words: Vec<String> = from_utf8(&bytes)
+            .expect("failed to turn bytes to str")
+            .to_string()
+            .split(":")
+            .map(|s| s.to_string())
+            .collect();
+        if words.len() != 2 {
+            return Outcome::Failure((
+                Status::Unauthorized,
+                String::from("Malformed Email/Password"),
+            ));
+        }
+
+        let conn: SolDbConn = req.guard().expect("req guard failed");
+        let res = User::verify_password(&words[0], &words[1], &conn);
         match res {
             Ok(user) => Outcome::Success(PasswordAuth(user)),
             Err(err) => Outcome::Failure((Status::Unauthorized, err)),
@@ -269,8 +292,8 @@ impl<'a, 'r> FromRequest<'a, 'r> for TokenAuth {
             return Outcome::Failure((Status::Unauthorized, String::from("Malformed Token")));
         }
 
-        let conn: db::Conn = req.guard().expect("req guard failed");
-        let tok = Token::find(&words[1], conn.handler()).expect("could not find token");
+        let conn: SolDbConn = req.guard().expect("req guard failed");
+        let tok = Token::find(&words[1], &conn).expect("could not find token");
 
         Outcome::Success(TokenAuth(tok))
     }
@@ -289,9 +312,9 @@ impl<'a, 'r> FromRequest<'a, 'r> for SensorTokenAuth {
                 format!("expected sensor token, got user token"),
             )),
             TokenType::Sensor => {
-                let conn: db::Conn = req.guard().expect("request guard failed");
+                let conn: SolDbConn = req.guard().expect("request guard failed");
                 let sensor_id = token.sensor_id.expect("token had no sensor id");
-                match Sensor::find(sensor_id, conn.handler()) {
+                match Sensor::find(sensor_id, &conn) {
                     Ok(sensor) => Outcome::Success(SensorTokenAuth(sensor)),
                     Err(_err) => Outcome::Failure((
                         Status::Unauthorized,
@@ -316,9 +339,9 @@ impl<'a, 'r> FromRequest<'a, 'r> for UserTokenAuth {
                 format!("expected user token, got sensor token"),
             )),
             TokenType::User => {
-                let conn: db::Conn = req.guard().expect("request guard failed");
+                let conn: SolDbConn = req.guard().expect("request guard failed");
                 let user_id = token.user_id.expect("token had no user id");
-                match User::by_id(user_id, conn.handler()) {
+                match User::by_id(user_id, &conn) {
                     Ok(user) => Outcome::Success(UserTokenAuth(user)),
                     Err(_err) => Outcome::Failure((
                         Status::Unauthorized,
@@ -336,12 +359,12 @@ struct CreateSensor {
 }
 
 #[post("/add_sensor", format = "application/json", data = "<data>")]
-fn add_sensor(auth: UserTokenAuth, data: Json<CreateSensor>, conn: db::Conn) -> String {
+fn add_sensor(auth: UserTokenAuth, data: Json<CreateSensor>, conn: SolDbConn) -> String {
     let sensor = SensorInsert {
         owner_id: auth.0.id,
         hardware_id: data.hardware_id,
     };
-    match Sensor::insert(&sensor, conn.handler()) {
+    match Sensor::insert(&sensor, &conn) {
         Ok(_) => format!("success!"),
         Err(err) => format!("err: {}", err.to_string()),
     }
@@ -356,9 +379,11 @@ fn private(auth: TokenAuth) -> String {
     )
 }
 
+#[database("sqlite_sol")]
+struct SolDbConn(diesel::SqliteConnection);
+
 fn rocket() -> Rocket {
     rocket::ignite()
-        .manage(db::init_pool())
         .mount(
             "/",
             routes![
@@ -386,6 +411,7 @@ fn rocket() -> Rocket {
         )
         .mount("/static", routes![files])
         .attach(Template::fairing())
+        .attach(SolDbConn::fairing())
 }
 
 fn main() {

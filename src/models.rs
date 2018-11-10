@@ -1,9 +1,7 @@
 use super::schema::{readings, sensors, tokens, users};
-use diesel::insert_into;
-use diesel::prelude::*;
+use diesel::{insert_into, prelude::*, Insertable, Queryable};
 use rand::Rng;
-use std::error::Error;
-use std::iter;
+use std::{error::Error, iter};
 
 #[derive(Insertable, Serialize, Deserialize)]
 #[table_name = "readings"]
