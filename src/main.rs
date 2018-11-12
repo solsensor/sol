@@ -201,13 +201,48 @@ fn files(path: PathBuf) -> Option<NamedFile> {
     NamedFile::open(Path::new("static/").join(path)).ok()
 }
 
+mod msg {
+    use rocket::{
+        http::{ContentType, Status},
+        request::Request,
+        response::{Responder, Response},
+    };
+    use std::io::Cursor;
+
+    pub struct Message(String);
+
+    impl Message {
+        pub fn new(text: &str) -> Message {
+            Message(text.to_string())
+        }
+    }
+
+    impl<'r> Responder<'r> for Message {
+        fn respond_to(self, _: &Request) -> ::std::result::Result<Response<'r>, Status> {
+            // Create JSON response
+            let resp = json!({
+                    "status": "success",
+                    "message": self.0,
+                })
+            .to_string();
+
+            // Respond. The `Ok` here is a bit of a misnomer. It means we
+            // successfully created an error response
+            Ok(Response::build()
+                .header(ContentType::JSON)
+                .sized_body(Cursor::new(resp))
+                .finalize())
+        }
+    }
+}
+
+use msg::Message;
+
 #[post("/users/new", format = "application/json", data = "<user>")]
-fn add_user(user: Json<UserInsert>, conn: SolDbConn) -> Result<JsonValue, echain::Error> {
+fn add_user(user: Json<UserInsert>, conn: SolDbConn) -> Result<Message, echain::Error> {
     let res = User::insert(&user.0, &conn);
     match res {
-        Ok(_count) => Ok(json!({
-            "status": "success",
-        })),
+        Ok(_count) => Ok(Message::new("successfully inserted user")),
         Err(err) => Err(err.chain_err(|| "failed to insert user")),
     }
 }
