@@ -192,12 +192,13 @@ fn files(path: PathBuf) -> Option<NamedFile> {
     NamedFile::open(Path::new("static/").join(path)).ok()
 }
 
-mod msg {
+mod res {
     use rocket::{
         http::{ContentType, Status},
         request::Request,
         response::{Responder, Response},
     };
+    use rocket_contrib::json::JsonValue;
     use std::io::Cursor;
 
     pub struct Message(String);
@@ -225,17 +226,46 @@ mod msg {
                 .finalize())
         }
     }
+
+    pub struct Data {
+        message: String,
+        data: JsonValue,
+    }
+
+    impl Data {
+        pub fn new(msg: &str, data: JsonValue) -> Data {
+            Data {
+                message: msg.to_string(),
+                data,
+            }
+        }
+    }
+
+    impl<'r> Responder<'r> for Data {
+        fn respond_to(self, _: &Request) -> ::std::result::Result<Response<'r>, Status> {
+            // Create JSON response
+            let resp = json!({
+                "status": "success",
+                "message": self.message,
+                "data": self.data,
+            })
+            .to_string();
+
+            // Respond. The `Ok` here is a bit of a misnomer. It means we
+            // successfully created an error response
+            Ok(Response::build()
+                .header(ContentType::JSON)
+                .sized_body(Cursor::new(resp))
+                .finalize())
+        }
+    }
 }
 
-use msg::Message;
+use res::{Data, Message};
 
 #[post("/users/new", format = "application/json", data = "<user>")]
-fn add_user(user: Json<UserInsert>, conn: SolDbConn) -> Result<Message, echain::Error> {
-    let res = User::insert(&user.0, &conn);
-    match res {
-        Ok(_count) => Ok(Message::new("successfully inserted user")),
-        Err(err) => Err(err.chain_err(|| "failed to insert user")),
-    }
+fn add_user(user: Json<UserInsert>, conn: SolDbConn) -> echain::Result<Message> {
+    User::insert(&user.0, &conn).map(|_| Message::new("successfully created user"))
 }
 
 #[get("/users/all")]
@@ -244,18 +274,19 @@ fn get_users(conn: SolDbConn) -> echain::Result<String> {
 }
 
 #[post("/sensor_token", format = "application/json", data = "<sensor>")]
-fn get_sensor_token(auth: UserTokenAuth, conn: SolDbConn, sensor: Json<SensorQuery>) -> String {
+fn get_sensor_token(
+    auth: UserTokenAuth,
+    conn: SolDbConn,
+    sensor: Json<SensorQuery>,
+) -> echain::Result<Data> {
     let user = auth.0;
     let sensor = sensor.0;
     if user.id == sensor.owner_id {
         let token = Token::new_sensor_token(sensor);
-        let res = Token::insert(&token, &conn);
-        match res {
-            Ok(_count) => token.token,
-            Err(err) => format!("failed: {}", err.to_string()),
-        }
+        Token::insert(&token, &conn)
+            .map(|_count| Data::new("got sensor token", json!({"token": token.token})))
     } else {
-        "user does not own sensor".to_string()
+        bail!("user does not own sensor")
     }
 }
 
@@ -279,10 +310,11 @@ fn add_reading(
 }
 
 #[post("/token")]
-fn get_token(auth: PasswordAuth, conn: SolDbConn) -> echain::Result<String> {
+fn get_token(auth: PasswordAuth, conn: SolDbConn) -> echain::Result<Data> {
     let user = auth.0;
     let token = Token::new_user_token(user);
-    Token::insert(&token, &conn).map(|_count| token.token)
+    Token::insert(&token, &conn)
+        .map(|_count| Data::new("got user token", json!({"token": token.token})))
 }
 
 struct PasswordAuth(UserQuery);
