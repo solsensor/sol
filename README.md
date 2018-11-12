@@ -14,8 +14,16 @@ here, you can create a new account and view details about users and sensors.
 ### register a new user
 
 ```
-$ curl https://solsensor.com/api/users/new -XPOST -H'Content-Type: application/json' --data '{"email":"newuser@gmail.com","password":"mypassword"}'
-{"status":"success"}
+$ curl \
+    https://solsensor.com/api/users/new \
+    -XPOST \
+    -H'Content-Type: application/json' \
+    --data '{"email":"newuser@gmail.com","password":"mypassword"}'
+
+{
+    "status":"success",
+    "message":"successfully created user"
+}
 ```
 
 Once your user is registered, you should see it at [https://solsensor.com/users].
@@ -27,12 +35,22 @@ authentication (for example, adding a new sensor to your account). In order to
 get a user token, you need to provide your email and password.
 
 ```
-$ curl https://solsensor.com/api/token -XPOST -H'Content-Type: application/json' --data '{"email":"newuser@gmail.com","password":"mypassword"}'
-abcde12345
+$ curl \
+    https://solsensor.com/api/token \
+    -XPOST \
+    -u 'newuser@gmail.com:mypassword'
+
+{
+    "status":"success",
+    "message":"got user token",
+    "data":{
+        "token":"DTYZYI5YSsH7hnIZrofhe2HhsaI4yZfgiPgED6pHSToiQI0wHWz9RqK8oPaZ3sMV"
+    }
+}
 ```
 
-The token that you get back will be much longer than the one shown here. This
-one is kept short for the sake of demonstration.
+The token that you get back will be different from the one shown here. Make sure
+to use the correct token in the following steps.
 
 ### add a sensor
 
@@ -40,8 +58,17 @@ To add a sensor to your account, provided your user token in the `Authorization`
 header, and the hardware id of the sensor in the body.
 
 ```
-$ curl https://solsensor.com/api/add_sensor -XPOST -H'Authorization: bearer abcde12345' -H'Content-Type: application/json' --data '{"hardware_id":1234567}'
-success!
+$ curl \
+    https://solsensor.com/api/add_sensor \
+    -XPOST \
+    -H'Authorization: bearer DTYZYI5YSsH7hnIZrofhe2HhsaI4yZfgiPgED6pHSToiQI0wHWz9RqK8oPaZ3sMV' \
+    -H'Content-Type: application/json' \
+    --data '{"hardware_id":1234567}'
+
+{
+    "status":"success",
+    "message":"successfully added sensor"
+}
 ```
 
 Once you have added the sensor, log in at [https://solsensor.com/login], and
@@ -57,8 +84,20 @@ to specify the sensor for which you want to get a token, and the user token you
 provide must correspond to the sensor's owner.
 
 ```
-$ curl https://solsensor.com/api/sensor_token -XPOST -H'Authorization: bearer abcde12345' -H'Content-Type: application/json' --data '{"id":1,"owner_id":1,"hardware_id":1234567}'
-wxyz6789
+$ curl \
+    https://solsensor.com/api/sensor_token \
+    -XPOST \
+    -H'Authorization: bearer DTYZYI5YSsH7hnIZrofhe2HhsaI4yZfgiPgED6pHSToiQI0wHWz9RqK8oPaZ3sMV' \
+    -H'Content-Type: application/json' \
+    --data '{"id":1,"owner_id":1,"hardware_id":1234567}'
+
+{
+    "message":"got sensor token",
+    "status":"success",
+    "data":{
+        "token":"XY1cvYRLkrJFlIEQMyr03TWPeIzGsYIvriLySNJ4MI37SNpHWpBTVgy18ws7T9Ix"
+    }
+}
 ```
 
 ### add a reading
@@ -66,8 +105,17 @@ wxyz6789
 Once you have a sensor token, you can add a reading.
 
 ```
-$ curl https://solsensor.com/api/add_reading -XPOST -H'Authorization: bearer wxyz6789' -H'Content-Type: application/json' --data '{"voltage":1.23}'
-success!
+$ curl \
+    https://solsensor.com/api/add_reading \
+    -XPOST \
+    -H'Authorization: bearer XY1cvYRLkrJFlIEQMyr03TWPeIzGsYIvriLySNJ4MI37SNpHWpBTVgy18ws7T9Ix' \
+    -H'Content-Type: application/json' \
+    --data '{"voltage":1.23}'
+
+{
+    "status":"success",
+    "message":"successfully added reading"
+}
 ```
 
 Once the reading has been added, you should be able to see it in the web ui.
