@@ -182,13 +182,9 @@ fn register() -> Template {
 }
 
 #[post("/register", data = "<form>")]
-fn register_post(form: Form<UserInsert>, conn: SolDbConn) -> Result<Redirect, String> {
+fn register_post(form: Form<UserInsert>, conn: SolDbConn) -> echain::Result<Redirect> {
     let user = form.into_inner();
-    let res = User::insert(&user, &conn);
-    match res {
-        Ok(_count) => Ok(Redirect::to(uri!(user: user.email))),
-        Err(err) => Err(err.to_string()),
-    }
+    User::insert(&user, &conn).map(|_count| Redirect::to(uri!(user: user.email)))
 }
 
 #[get("/<path..>")]
@@ -216,9 +212,9 @@ mod msg {
         fn respond_to(self, _: &Request) -> ::std::result::Result<Response<'r>, Status> {
             // Create JSON response
             let resp = json!({
-                    "status": "success",
-                    "message": self.0,
-                })
+                "status": "success",
+                "message": self.0,
+            })
             .to_string();
 
             // Respond. The `Ok` here is a bit of a misnomer. It means we
@@ -243,11 +239,8 @@ fn add_user(user: Json<UserInsert>, conn: SolDbConn) -> Result<Message, echain::
 }
 
 #[get("/users/all")]
-fn get_users(conn: SolDbConn) -> String {
-    format!(
-        "all users: {:?}",
-        User::all(&conn).expect("failed to get all users")
-    )
+fn get_users(conn: SolDbConn) -> echain::Result<String> {
+    User::all(&conn).map(|users| format!("all users: {:?}", users))
 }
 
 #[post("/sensor_token", format = "application/json", data = "<sensor>")]
@@ -272,27 +265,24 @@ struct CreateReading {
 }
 
 #[post("/add_reading", format = "application/json", data = "<reading>")]
-fn add_reading(auth: SensorTokenAuth, conn: SolDbConn, reading: Json<CreateReading>) -> String {
+fn add_reading(
+    auth: SensorTokenAuth,
+    conn: SolDbConn,
+    reading: Json<CreateReading>,
+) -> echain::Result<Message> {
     let reading = ReadingInsert {
         id: None,
         voltage: reading.0.voltage,
         sensor_id: auth.0.id,
     };
-    match Reading::insert(&reading, &conn) {
-        Ok(_) => format!("success!"),
-        Err(err) => format!("err: {}", err.to_string()),
-    }
+    Reading::insert(&reading, &conn).map(|_| Message::new("successfully added reading"))
 }
 
 #[post("/token")]
-fn get_token(auth: PasswordAuth, conn: SolDbConn) -> String {
+fn get_token(auth: PasswordAuth, conn: SolDbConn) -> echain::Result<String> {
     let user = auth.0;
     let token = Token::new_user_token(user);
-    let res = Token::insert(&token, &conn);
-    match res {
-        Ok(_count) => token.token,
-        Err(err) => format!("failed: {}", err.to_string()),
-    }
+    Token::insert(&token, &conn).map(|_count| token.token)
 }
 
 struct PasswordAuth(UserQuery);
@@ -429,24 +419,16 @@ struct CreateSensor {
 }
 
 #[post("/add_sensor", format = "application/json", data = "<data>")]
-fn add_sensor(auth: UserTokenAuth, data: Json<CreateSensor>, conn: SolDbConn) -> String {
+fn add_sensor(
+    auth: UserTokenAuth,
+    data: Json<CreateSensor>,
+    conn: SolDbConn,
+) -> echain::Result<Message> {
     let sensor = SensorInsert {
         owner_id: auth.0.id,
         hardware_id: data.hardware_id,
     };
-    match Sensor::insert(&sensor, &conn) {
-        Ok(_) => format!("success!"),
-        Err(err) => format!("err: {}", err.to_string()),
-    }
-}
-
-#[get("/private")]
-fn private(auth: TokenAuth) -> String {
-    format!(
-        "Got private data for user with id {} using token \"{}\"",
-        auth.0.user_id.expect("user had no id"),
-        auth.0.token
-    )
+    Sensor::insert(&sensor, &conn).map(|_| Message::new("successfully added sensor"))
 }
 
 #[database("sqlite_sol")]
@@ -473,7 +455,6 @@ fn rocket() -> Rocket {
                 add_user,
                 get_users,
                 get_token,
-                private,
                 get_sensor_token,
                 add_sensor,
                 add_reading,
