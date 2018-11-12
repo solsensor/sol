@@ -119,8 +119,8 @@ fn users(conn: SolDbConn) -> Template {
 }
 
 #[get("/user/<email>")]
-fn user(email: String, conn: SolDbConn) -> Template {
-    let user = User::by_email(&email, &conn).unwrap();
+fn user(email: String, conn: SolDbConn) -> echain::Result<Template> {
+    let user = User::by_email(&email, &conn)?;
     let sensors = Sensor::find_for_user(user.id, &conn).ok();
     let ctx = TemplateCtx {
         title: email,
@@ -130,12 +130,12 @@ fn user(email: String, conn: SolDbConn) -> Template {
         sensor: None,
         readings: None,
     };
-    Template::render("user", &ctx)
+    Ok(Template::render("user", &ctx))
 }
 
 #[get("/sensor/<id>")]
-fn sensor(id: i32, conn: SolDbConn) -> Template {
-    let sensor = Sensor::find(id, &conn).unwrap();
+fn sensor(id: i32, conn: SolDbConn) -> echain::Result<Template> {
+    let sensor = Sensor::find(id, &conn)?;
     let readings = Reading::find_for_sensor(sensor.id, &conn).ok();
     let ctx = TemplateCtx {
         title: format!("sensor {}", id),
@@ -145,7 +145,7 @@ fn sensor(id: i32, conn: SolDbConn) -> Template {
         sensor: Some(sensor),
         readings,
     };
-    Template::render("sensor", &ctx)
+    Ok(Template::render("sensor", &ctx))
 }
 
 #[get("/login")]
