@@ -14,6 +14,8 @@ extern crate rocket_contrib;
 extern crate serde_derive;
 #[macro_use]
 extern crate diesel;
+#[macro_use]
+extern crate error_chain;
 
 mod models;
 mod schema;
@@ -36,9 +38,50 @@ use rocket_contrib::{
 };
 
 use std::{
+    io::{Error, ErrorKind},
     path::{Path, PathBuf},
     str::from_utf8,
 };
+
+mod echain {
+    use rocket::{
+        http::{ContentType, Status},
+        request::Request,
+        response::{Responder, Response},
+    };
+    use std::io::Cursor;
+
+    error_chain!{}
+
+    impl<'r> Responder<'r> for Error {
+        fn respond_to(self, _: &Request) -> ::std::result::Result<Response<'r>, Status> {
+            // Render the whole error chain to a single string
+            let mut rslt = String::new();
+            rslt += &format!("Error: {}", self);
+            self.iter()
+                .skip(1)
+                .map(|ce| rslt += &format!(", caused by: {}", ce))
+                .for_each(drop);
+
+            // Create JSON response
+            let resp = json!({
+                "status": "failure",
+                "message": rslt,
+            })
+            .to_string();
+
+            // Respond. The `Ok` here is a bit of a misnomer. It means we
+            // successfully created an error response
+            Ok(Response::build()
+                .status(Status::BadRequest)
+                .header(ContentType::JSON)
+                .sized_body(Cursor::new(resp))
+                .finalize())
+        }
+    }
+}
+
+use echain::ResultExt;
 
 #[derive(Serialize)]
 struct TemplateCtx {
@@ -159,16 +202,13 @@ fn files(path: PathBuf) -> Option<NamedFile> {
 }
 
 #[post("/users/new", format = "application/json", data = "<user>")]
-fn add_user(user: Json<UserInsert>, conn: SolDbConn) -> JsonValue {
+fn add_user(user: Json<UserInsert>, conn: SolDbConn) -> Result<JsonValue, echain::Error> {
     let res = User::insert(&user.0, &conn);
     match res {
-        Ok(_count) => json!({
+        Ok(_count) => Ok(json!({
             "status": "success",
-        }),
-        Err(err) => json!({
-            "status": "failed",
-            "reason": err.to_string()
-        }),
+        })),
+        Err(err) => Err(err.chain_err(|| "failed to insert user")),
     }
 }
 

@@ -1,5 +1,6 @@
 use super::schema::{readings, sensors, tokens, users};
 use diesel::{insert_into, prelude::*, Insertable, Queryable};
+use echain;
 use rand::Rng;
 use std::{error::Error, iter};
 
@@ -89,9 +90,12 @@ impl User {
         }
     }
 
-    pub fn insert(user: &UserInsert, conn: &SqliteConnection) -> Result<usize, impl Error> {
+    pub fn insert(user: &UserInsert, conn: &SqliteConnection) -> echain::Result<usize> {
         use super::schema::users::table as users_table;
-        insert_into(users_table).values(user).execute(conn)
+        match insert_into(users_table).values(user).execute(conn) {
+            Ok(count) => Ok(count),
+            Err(err) => Err(err.to_string().into()),
+        }
     }
 }
 
