@@ -19,6 +19,8 @@ extern crate error_chain;
 
 mod models;
 mod schema;
+#[cfg(test)]
+mod tests;
 
 use models::{
     Reading, ReadingInsert, ReadingQuery, Sensor, SensorInsert, SensorQuery, Token, TokenQuery,
