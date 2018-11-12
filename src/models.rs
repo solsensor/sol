@@ -2,7 +2,7 @@ use super::schema::{readings, sensors, tokens, users};
 use diesel::{insert_into, prelude::*, Insertable, Queryable};
 use echain;
 use rand::Rng;
-use std::{error::Error, iter};
+use std::iter;
 
 #[derive(Insertable, Serialize, Deserialize)]
 #[table_name = "readings"]
@@ -22,21 +22,25 @@ pub struct ReadingQuery {
 pub struct Reading;
 
 impl Reading {
-    pub fn insert(reading: &ReadingInsert, conn: &SqliteConnection) -> Result<usize, impl Error> {
+    pub fn insert(reading: &ReadingInsert, conn: &SqliteConnection) -> echain::Result<usize> {
         use super::schema::readings::table as readings_table;
-        insert_into(readings_table).values(reading).execute(conn)
+        insert_into(readings_table)
+            .values(reading)
+            .execute(conn)
+            .map_err(|e| e.into())
     }
 
     pub fn find_for_sensor(
         sensor_id: i32,
         conn: &SqliteConnection,
-    ) -> Result<Vec<ReadingQuery>, impl Error> {
+    ) -> echain::Result<Vec<ReadingQuery>> {
         use super::schema::readings::dsl::{
             readings as all_readings, sensor_id as reading_sensor_id,
         };
         all_readings
             .filter(reading_sensor_id.eq(sensor_id))
             .load(conn)
+            .map_err(|e| e.into())
     }
 }
 
@@ -58,44 +62,47 @@ pub struct UserQuery {
 pub struct User;
 
 impl User {
-    pub fn all(conn: &SqliteConnection) -> Result<Vec<UserQuery>, impl Error> {
+    pub fn all(conn: &SqliteConnection) -> echain::Result<Vec<UserQuery>> {
         use super::schema::users::dsl::users as all_users;
-        all_users.load::<UserQuery>(conn)
+        all_users.load::<UserQuery>(conn).map_err(|e| e.into())
     }
 
-    pub fn by_email(email: &String, conn: &SqliteConnection) -> Result<UserQuery, impl Error> {
+    pub fn by_email(email: &String, conn: &SqliteConnection) -> echain::Result<UserQuery> {
         use super::schema::users::dsl::{email as user_email, users as all_users};
-        all_users.filter(user_email.eq(email)).first(conn)
+        all_users
+            .filter(user_email.eq(email))
+            .first(conn)
+            .map_err(|e| e.into())
     }
 
-    pub fn by_id(id: i32, conn: &SqliteConnection) -> Result<UserQuery, impl Error> {
+    pub fn by_id(id: i32, conn: &SqliteConnection) -> echain::Result<UserQuery> {
         use super::schema::users::dsl::{id as user_id, users as all_users};
-        all_users.filter(user_id.eq(id)).first(conn)
+        all_users
+            .filter(user_id.eq(id))
+            .first(conn)
+            .map_err(|e| e.into())
     }
 
     pub fn verify_password(
         email: &String,
         password: &String,
         conn: &SqliteConnection,
-    ) -> Result<UserQuery, String> {
-        match Self::by_email(email, conn) {
-            Ok(user) => {
-                if &user.password == password {
-                    Ok(user)
-                } else {
-                    Err(format!("incorrect password"))
-                }
+    ) -> echain::Result<UserQuery> {
+        Self::by_email(email, conn).and_then(|user| {
+            if &user.password == password {
+                Ok(user)
+            } else {
+                bail!("incorrect password")
             }
-            Err(err) => Err(format!("failed to get user: {}", err.to_string())),
-        }
+        })
     }
 
     pub fn insert(user: &UserInsert, conn: &SqliteConnection) -> echain::Result<usize> {
         use super::schema::users::table as users_table;
-        match insert_into(users_table).values(user).execute(conn) {
-            Ok(count) => Ok(count),
-            Err(err) => Err(err.to_string().into()),
-        }
+        insert_into(users_table)
+            .values(user)
+            .execute(conn)
+            .map_err(|e| e.into())
     }
 }
 
@@ -169,14 +176,20 @@ impl Token {
         }
     }
 
-    pub fn find(token: &String, conn: &SqliteConnection) -> Result<TokenQuery, impl Error> {
+    pub fn find(token: &String, conn: &SqliteConnection) -> echain::Result<TokenQuery> {
         use super::schema::tokens::dsl::{token as token_token, tokens as all_tokens};
-        all_tokens.filter(token_token.eq(token)).first(conn)
+        all_tokens
+            .filter(token_token.eq(token))
+            .first(conn)
+            .map_err(|e| e.into())
     }
 
-    pub fn insert(token: &TokenInsert, conn: &SqliteConnection) -> Result<usize, impl Error> {
+    pub fn insert(token: &TokenInsert, conn: &SqliteConnection) -> echain::Result<usize> {
         use super::schema::tokens::table as tokens_table;
-        insert_into(tokens_table).values(token).execute(conn)
+        insert_into(tokens_table)
+            .values(token)
+            .execute(conn)
+            .map_err(|e| e.into())
     }
 }
 
@@ -197,21 +210,30 @@ pub struct SensorQuery {
 pub struct Sensor;
 
 impl Sensor {
-    pub fn find(id: i32, conn: &SqliteConnection) -> Result<SensorQuery, impl Error> {
+    pub fn find(id: i32, conn: &SqliteConnection) -> echain::Result<SensorQuery> {
         use super::schema::sensors::dsl::{id as sensor_id, sensors as all_sensors};
-        all_sensors.filter(sensor_id.eq(id)).first(conn)
+        all_sensors
+            .filter(sensor_id.eq(id))
+            .first(conn)
+            .map_err(|e| e.into())
     }
 
     pub fn find_for_user(
         user_id: i32,
         conn: &SqliteConnection,
-    ) -> Result<Vec<SensorQuery>, impl Error> {
+    ) -> echain::Result<Vec<SensorQuery>> {
         use super::schema::sensors::dsl::{owner_id as sensor_owner_id, sensors as all_sensors};
-        all_sensors.filter(sensor_owner_id.eq(user_id)).load(conn)
+        all_sensors
+            .filter(sensor_owner_id.eq(user_id))
+            .load(conn)
+            .map_err(|e| e.into())
     }
 
-    pub fn insert(sensor: &SensorInsert, conn: &SqliteConnection) -> Result<usize, impl Error> {
+    pub fn insert(sensor: &SensorInsert, conn: &SqliteConnection) -> echain::Result<usize> {
         use super::schema::sensors::table as sensors_table;
-        insert_into(sensors_table).values(sensor).execute(conn)
+        insert_into(sensors_table)
+            .values(sensor)
+            .execute(conn)
+            .map_err(|e| e.into())
     }
 }

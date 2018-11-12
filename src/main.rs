@@ -32,13 +32,9 @@ use rocket::{
     response::{NamedFile, Redirect},
     routes, Outcome, Request, Rocket,
 };
-use rocket_contrib::{
-    json::{Json, JsonValue},
-    templates::Template,
-};
+use rocket_contrib::{json::Json, templates::Template};
 
 use std::{
-    io::{Error, ErrorKind},
     path::{Path, PathBuf},
     str::from_utf8,
 };
@@ -51,7 +47,11 @@ mod echain {
     };
     use std::io::Cursor;
 
-    error_chain!{}
+    error_chain!{
+        foreign_links {
+            Diesel(::diesel::result::Error);
+        }
+    }
 
     impl<'r> Responder<'r> for Error {
         fn respond_to(self, _: &Request) -> ::std::result::Result<Response<'r>, Status> {
@@ -80,8 +80,6 @@ mod echain {
         }
     }
 }
-
-use echain::ResultExt;
 
 #[derive(Serialize)]
 struct TemplateCtx {
@@ -164,13 +162,10 @@ fn login() -> Template {
 }
 
 #[post("/login", data = "<creds>")]
-fn login_post(creds: Form<EmailPassword>, conn: SolDbConn) -> Result<Redirect, String> {
+fn login_post(creds: Form<EmailPassword>, conn: SolDbConn) -> echain::Result<Redirect> {
     let creds = creds.into_inner();
-    let res = User::verify_password(&creds.email, &creds.password, &conn);
-    match res {
-        Ok(_user) => Ok(Redirect::to(uri!(user: creds.email))), // TODO set cookie or something
-        Err(err) => Err(err),
-    }
+    User::verify_password(&creds.email, &creds.password, &conn)
+        .map(|user| Redirect::to(uri!(user: user.email)))
 }
 
 #[get("/register")]
@@ -343,7 +338,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for PasswordAuth {
         let res = User::verify_password(&words[0], &words[1], &conn);
         match res {
             Ok(user) => Outcome::Success(PasswordAuth(user)),
-            Err(err) => Outcome::Failure((Status::Unauthorized, err)),
+            Err(err) => Outcome::Failure((Status::Unauthorized, err.to_string())),
         }
     }
 }
