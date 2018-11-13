@@ -321,14 +321,14 @@ fn add_reading(
 }
 
 #[post("/token")]
-fn get_token(auth: PasswordAuth, conn: SolDbConn) -> echain::Result<Data> {
+fn get_token(auth: BasicAuth, conn: SolDbConn) -> echain::Result<Data> {
     let user = auth.0;
     let token = Token::new_user_token(user);
     Token::insert(&token, &conn)
         .map(|_count| Data::new("got user token", json!({"token": token.token})))
 }
 
-struct PasswordAuth(UserQuery);
+struct BasicAuth(UserQuery);
 
 #[derive(Deserialize, FromForm)]
 struct EmailPassword {
@@ -336,7 +336,7 @@ struct EmailPassword {
     password: String,
 }
 
-impl<'a, 'r> FromRequest<'a, 'r> for PasswordAuth {
+impl<'a, 'r> FromRequest<'a, 'r> for BasicAuth {
     type Error = String;
     fn from_request(req: &'a Request<'r>) -> Outcome<Self, (Status, String), ()> {
         let keys: Vec<_> = req.headers().get("Authorization").collect();
@@ -370,7 +370,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for PasswordAuth {
         let conn: SolDbConn = req.guard().expect("req guard failed");
         let res = User::verify_password(&words[0], &words[1], &conn);
         match res {
-            Ok(user) => Outcome::Success(PasswordAuth(user)),
+            Ok(user) => Outcome::Success(BasicAuth(user)),
             Err(err) => Outcome::Failure((Status::Unauthorized, err.to_string())),
         }
     }
@@ -452,6 +452,24 @@ impl<'a, 'r> FromRequest<'a, 'r> for UserTokenAuth {
                     )),
                 }
             }
+        }
+    }
+}
+
+struct UserCookieAuth(UserQuery);
+impl<'a, 'r> FromRequest<'a, 'r> for UserCookieAuth {
+    type Error = String;
+    fn from_request(req: &'a Request<'r>) -> Outcome<Self, (Status, String), ()> {
+        let conn: SolDbConn = req.guard().expect("db req guard failed");
+        let res = req
+            .cookies()
+            .get_private("user_token")
+            .ok_or("failed to get token".into())
+            .map(|ck| ck.value().to_string())
+            .and_then(|tok| User::by_token(&tok, &conn));
+        match res {
+            Ok(user) => Outcome::Success(UserCookieAuth(user)),
+            Err(err) => Outcome::Failure((Status::Unauthorized, err.to_string())),
         }
     }
 }

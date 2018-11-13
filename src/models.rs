@@ -83,6 +83,13 @@ impl User {
             .map_err(|e| e.into())
     }
 
+    pub fn by_token(token: &String, conn: &SqliteConnection) -> echain::Result<UserQuery> {
+        match Token::find(token, conn)?.user_id {
+            Some(id) => Self::by_id(id, conn),
+            None => bail!("expected user token, got sensor token"),
+        }
+    }
+
     pub fn verify_password(
         email: &String,
         password: &String,
