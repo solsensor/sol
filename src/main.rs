@@ -28,7 +28,7 @@ use models::{
 };
 use rocket::{
     get,
-    http::Status,
+    http::{Cookie, Cookies, Status},
     post,
     request::{Form, FromRequest},
     response::{NamedFile, Redirect},
@@ -164,10 +164,19 @@ fn login() -> Template {
 }
 
 #[post("/login", data = "<creds>")]
-fn login_post(creds: Form<EmailPassword>, conn: SolDbConn) -> echain::Result<Redirect> {
+fn login_post(
+    creds: Form<EmailPassword>,
+    conn: SolDbConn,
+    mut cookies: Cookies,
+) -> echain::Result<Redirect> {
     let creds = creds.into_inner();
-    User::verify_password(&creds.email, &creds.password, &conn)
-        .map(|user| Redirect::to(uri!(user: user.email)))
+    let user = User::verify_password(&creds.email, &creds.password, &conn)?;
+    cookies.add(
+        Cookie::build("user_token", "this_is_an_api_key")
+            .path("/")
+            .finish(),
+    );
+    Ok(Redirect::to(uri!(user: user.email)))
 }
 
 #[get("/register")]
