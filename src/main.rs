@@ -280,8 +280,8 @@ fn add_user(user: Json<UserInsert>, conn: SolDbConn) -> echain::Result<Message> 
 }
 
 #[get("/users/all")]
-fn get_users(conn: SolDbConn) -> echain::Result<String> {
-    User::all(&conn).map(|users| format!("all users: {:?}", users))
+fn get_users(conn: SolDbConn) -> echain::Result<Data> {
+    User::all(&conn).map(|users| Data::new("found all users", json!({ "users": users })))
 }
 
 #[post("/sensor_token", format = "application/json", data = "<sensor>")]
