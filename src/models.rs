@@ -167,7 +167,7 @@ impl Token {
 
     pub fn new_user_token(user: UserQuery) -> TokenInsert {
         TokenInsert {
-            token: Self::rand_str(),
+            token: format!("user-{}", Self::rand_str()),
             type_: TokenType::User.get_string(),
             user_id: Some(user.id),
             sensor_id: None,
@@ -176,7 +176,7 @@ impl Token {
 
     pub fn new_sensor_token(sensor: SensorQuery) -> TokenInsert {
         TokenInsert {
-            token: Self::rand_str(),
+            token: format!("sensor-{}", Self::rand_str()),
             type_: TokenType::Sensor.get_string(),
             user_id: None,
             sensor_id: Some(sensor.id),
