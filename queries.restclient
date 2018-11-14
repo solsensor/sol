@@ -1,0 +1,103 @@
+# -*- restclient -*-
+
+:root = http://localhost:8000
+#:root = https://solsensor.com
+
+#
+# Get all users
+#
+
+GET :root/api/users/all
+
+
+#
+# Register a new user
+#
+
+:email = newuser@gmail.com
+:password = mypassword
+
+POST :root/api/users/new
+Content-Type: application/json
+
+{
+  "email": ":email",
+  "password": ":password"
+}
+
+
+#
+# Get a user token
+#
+
+:hash := <<
+(progn
+  (let (email password)
+    (setq email "newuser@gmail.com")
+    (setq password "mypassword")
+	(format "%s:%s" email password)
+	()
+  )
+)
+#
+
+POST :root/api/users/new
+Authorization: Basic :hash
+Content-Type: application/json
+
+{
+  "email": ":email",
+  "password": ":password"
+}
+
+
+#
+# Add a sensor
+#
+
+:user-token = DTYZYI5YSsH7hnIZrofhe2HhsaI4yZfgiPgED6pHSToiQI0wHWz9RqK8oPaZ3sMV
+:hardware-id = 12345
+
+POST :root/api/add_sensor
+Authorization: bearer :user-token
+Content-Type: application/json
+
+{
+  "hardware_id": :hardware-id
+}
+
+
+#
+# Get a sensor token
+#
+
+:user-token = DTYZYI5YSsH7hnIZrofhe2HhsaI4yZfgiPgED6pHSToiQI0wHWz9RqK8oPaZ3sMV
+:sensor-id =  1
+:owner-id = 1
+:hardware-id = 12345
+
+POST :root/api/sensor_token
+Authorization: bearer :user-token
+Content-Type: application/json
+
+{
+  "id": :sensor-id,
+  "owner_id": :owner-id,
+  "hardware_id": :hardware-id
+}
+
+
+#
+# Add a reading
+#
+
+:sensor-token = 9gQ7OnkW3ChnjZNvDkSgE5nvnHkcsMcnv64FERyv6oA6FmdrLN4e8BVM8zevZ7f0
+:voltage = 1.234
+
+POST :root/api/add_reading
+Authorization: bearer :sensor-token
+Content-Type: application/json
+
+{
+  "voltage": :voltage
+}
