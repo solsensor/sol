@@ -219,9 +219,12 @@ pub struct Sensor;
 
 impl Sensor {
     pub fn find(id: i32, conn: &SqliteConnection) -> echain::Result<SensorQuery> {
-        use super::schema::sensors::dsl::{id as sensor_id, sensors as all_sensors};
+        use super::schema::sensors::dsl::{
+            active as sensor_active, id as sensor_id, sensors as all_sensors,
+        };
         all_sensors
             .filter(sensor_id.eq(id))
+            .filter(sensor_active.eq(true))
             .first(conn)
             .map_err(|e| e.into())
     }
@@ -230,15 +233,35 @@ impl Sensor {
         user_id: i32,
         conn: &SqliteConnection,
     ) -> echain::Result<Vec<SensorQuery>> {
-        use super::schema::sensors::dsl::{owner_id as sensor_owner_id, sensors as all_sensors};
+        use super::schema::sensors::dsl::{
+            active as sensor_active, owner_id as sensor_owner_id, sensors as all_sensors,
+        };
         all_sensors
             .filter(sensor_owner_id.eq(user_id))
+            .filter(sensor_active.eq(true))
             .load(conn)
             .map_err(|e| e.into())
     }
 
     pub fn insert(sensor: &SensorInsert, conn: &SqliteConnection) -> echain::Result<usize> {
-        use super::schema::sensors::table as sensors_table;
+        use super::schema::sensors::{
+            dsl::{
+                active as sensor_active, hardware_id as sensor_hardware_id, sensors as all_sensors,
+            },
+            table as sensors_table,
+        };
+        use diesel::dsl::count_star;
+
+        let count: i64 = all_sensors
+            .select(count_star())
+            .filter(sensor_hardware_id.eq(sensor.hardware_id))
+            .filter(sensor_active.eq(true))
+            .first(conn)?;
+
+        if count != 0 {
+            bail!("active sensor with that hardware_id already exists")
+        }
+
         insert_into(sensors_table)
             .values(sensor)
             .execute(conn)
