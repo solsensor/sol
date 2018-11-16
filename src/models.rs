@@ -212,6 +212,7 @@ pub struct SensorQuery {
     pub id: i32,
     pub owner_id: i32,
     pub hardware_id: i32,
+    pub active: bool,
 }
 
 pub struct Sensor;

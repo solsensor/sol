@@ -1,0 +1,8 @@
+DROP TABLE sensors;
+CREATE TABLE sensors (
+  id INTEGER PRIMARY KEY NOT NULL,
+  owner_id INTEGER NOT NULL,
+  hardware_id INTEGER NOT NULL,
+  active BOOLEAN NOT NULL DEFAULT 1,
+  FOREIGN KEY(owner_id) REFERENCES users(id)
+);
