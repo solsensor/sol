@@ -30,6 +30,17 @@ impl Reading {
             .map_err(|e| e.into())
     }
 
+    pub fn insert_many(
+        readings: &Vec<ReadingInsert>,
+        conn: &SqliteConnection,
+    ) -> echain::Result<usize> {
+        use super::schema::readings::table as readings_table;
+        insert_into(readings_table)
+            .values(readings)
+            .execute(conn)
+            .map_err(|e| e.into())
+    }
+
     pub fn find_for_sensor(
         sensor_id: i32,
         conn: &SqliteConnection,

@@ -118,4 +118,20 @@ $ curl \
 }
 ```
 
+You can also add multiple readings at once.
+
+```
+$ curl \
+    https://solsensor.com/api/add_readings \
+    -XPOST \
+    -H'Authorization: bearer XY1cvYRLkrJFlIEQMyr03TWPeIzGsYIvriLySNJ4MI37SNpHWpBTVgy18ws7T9Ix' \
+    -H'Content-Type: application/json' \
+    --data '[{"voltage":1.23},{"voltage:4.56"}]'
+
+{
+    "status":"success",
+    "message":"successfully added readings"
+}
+```
+
 Once the reading has been added, you should be able to see it in the web ui.

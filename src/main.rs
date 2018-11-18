@@ -320,6 +320,24 @@ fn add_reading(
     Reading::insert(&reading, &conn).map(|_| Message::new("successfully added reading"))
 }
 
+#[post("/add_readings", format = "application/json", data = "<readings>")]
+fn add_readings(
+    auth: SensorTokenAuth,
+    conn: SolDbConn,
+    readings: Json<Vec<CreateReading>>,
+) -> echain::Result<Message> {
+    let readings = readings
+        .0
+        .iter()
+        .map(|r| ReadingInsert {
+            id: None,
+            voltage: r.voltage,
+            sensor_id: auth.0.id,
+        })
+        .collect();
+    Reading::insert_many(&readings, &conn).map(|_| Message::new("successfully added readings"))
+}
+
 #[post("/token")]
 fn get_token(auth: BasicAuth, conn: SolDbConn) -> echain::Result<Data> {
     let user = auth.0;
@@ -519,6 +537,7 @@ fn rocket() -> Rocket {
                 get_sensor_token,
                 add_sensor,
                 add_reading,
+                add_readings,
             ],
         )
         .mount("/static", routes![files])
