@@ -304,6 +304,7 @@ fn get_sensor_token(
 #[allow(non_snake_case)]
 #[derive(Serialize, Deserialize)]
 struct CreateReading {
+    timestamp: i32,
     peak_power_mW: f32,
     peak_current_mA: f32,
     peak_voltage_V: f32,
@@ -320,6 +321,7 @@ fn add_reading(
     let reading = ReadingInsert {
         id: None,
         sensor_id: auth.0.id,
+        timestamp: reading.0.timestamp,
         peak_power_mW: reading.0.peak_power_mW,
         peak_current_mA: reading.0.peak_current_mA,
         peak_voltage_V: reading.0.peak_voltage_V,
@@ -341,6 +343,7 @@ fn add_readings(
         .map(|r| ReadingInsert {
             id: None,
             sensor_id: auth.0.id,
+            timestamp: r.timestamp,
             peak_power_mW: r.peak_power_mW,
             peak_current_mA: r.peak_current_mA,
             peak_voltage_V: r.peak_voltage_V,

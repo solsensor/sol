@@ -110,7 +110,7 @@ $ curl \
     -XPOST \
     -H'Authorization: bearer sensor-XY1cvYRLkrJFlIEQMyr03TWPeIzGsYIvriLySNJ4MI37SNpHWpBTVgy18ws7T9Ix' \
     -H'Content-Type: application/json' \
-    --data '{"peak_power_mW":1.23,"peak_current_mA":1.23,"peak_voltage_V":1.23,"temp_celsius":15.2,"batt_V":1.23}'
+    --data '{"peak_power_mW":1.23,"peak_current_mA":1.23,"peak_voltage_V":1.23,"temp_celsius":15.2,"batt_V":1.23,"timestamp":1542513093}'
 
 {
     "status":"success",
@@ -126,7 +126,7 @@ $ curl \
     -XPOST \
     -H'Authorization: bearer sensor-XY1cvYRLkrJFlIEQMyr03TWPeIzGsYIvriLySNJ4MI37SNpHWpBTVgy18ws7T9Ix' \
     -H'Content-Type: application/json' \
-    --data '[{"peak_power_mW":1.23,"peak_current_mA":1.23,"peak_voltage_V":1.23,"temp_celsius":15.2,"batt_V":1.23},{"peak_power_mW":1.23,"peak_current_mA":1.23,"peak_voltage_V":1.23,"temp_celsius":15.2,"batt_V":1.23}]'
+    --data '[{"peak_power_mW":1.23,"peak_current_mA":1.23,"peak_voltage_V":1.23,"temp_celsius":15.2,"batt_V":1.23,"timestamp":1542513093},{"peak_power_mW":1.23,"timestamp":1542513093,"peak_current_mA":1.23,"peak_voltage_V":1.23,"temp_celsius":15.2,"batt_V":1.23}]'
 
 {
     "status":"success",

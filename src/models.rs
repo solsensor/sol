@@ -10,6 +10,7 @@ use std::iter;
 pub struct ReadingInsert {
     pub id: Option<i32>,
     pub sensor_id: i32,
+    pub timestamp: i32,
     pub peak_power_mW: f32,
     pub peak_current_mA: f32,
     pub peak_voltage_V: f32,
@@ -22,6 +23,7 @@ pub struct ReadingInsert {
 pub struct ReadingQuery {
     pub id: i32,
     pub sensor_id: i32,
+    pub timestamp: i32,
     pub peak_power_mW: f32,
     pub peak_current_mA: f32,
     pub peak_voltage_V: f32,

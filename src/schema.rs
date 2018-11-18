@@ -2,6 +2,7 @@ table! {
     readings (id) {
         id -> Integer,
         sensor_id -> Integer,
+        timestamp -> Integer,
         peak_power_mW -> Float,
         peak_current_mA -> Float,
         peak_voltage_V -> Float,
