@@ -4,19 +4,29 @@ use echain;
 use rand::Rng;
 use std::iter;
 
+#[allow(non_snake_case)]
 #[derive(Insertable, Serialize, Deserialize)]
 #[table_name = "readings"]
 pub struct ReadingInsert {
     pub id: Option<i32>,
-    pub voltage: f32,
     pub sensor_id: i32,
+    pub peak_power_mW: f32,
+    pub peak_current_mA: f32,
+    pub peak_voltage_V: f32,
+    pub temp_celsius: f32,
+    pub batt_V: f32,
 }
 
+#[allow(non_snake_case)]
 #[derive(Serialize, Queryable, Debug)]
 pub struct ReadingQuery {
     pub id: i32,
-    pub voltage: f32,
     pub sensor_id: i32,
+    pub peak_power_mW: f32,
+    pub peak_current_mA: f32,
+    pub peak_voltage_V: f32,
+    pub temp_celsius: f32,
+    pub batt_V: f32,
 }
 
 pub struct Reading;

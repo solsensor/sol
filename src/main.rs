@@ -301,9 +301,14 @@ fn get_sensor_token(
     }
 }
 
+#[allow(non_snake_case)]
 #[derive(Serialize, Deserialize)]
 struct CreateReading {
-    voltage: f32,
+    peak_power_mW: f32,
+    peak_current_mA: f32,
+    peak_voltage_V: f32,
+    temp_celsius: f32,
+    batt_V: f32,
 }
 
 #[post("/add_reading", format = "application/json", data = "<reading>")]
@@ -314,8 +319,12 @@ fn add_reading(
 ) -> echain::Result<Message> {
     let reading = ReadingInsert {
         id: None,
-        voltage: reading.0.voltage,
         sensor_id: auth.0.id,
+        peak_power_mW: reading.0.peak_power_mW,
+        peak_current_mA: reading.0.peak_current_mA,
+        peak_voltage_V: reading.0.peak_voltage_V,
+        temp_celsius: reading.0.temp_celsius,
+        batt_V: reading.0.batt_V,
     };
     Reading::insert(&reading, &conn).map(|_| Message::new("successfully added reading"))
 }
@@ -331,8 +340,12 @@ fn add_readings(
         .iter()
         .map(|r| ReadingInsert {
             id: None,
-            voltage: r.voltage,
             sensor_id: auth.0.id,
+            peak_power_mW: r.peak_power_mW,
+            peak_current_mA: r.peak_current_mA,
+            peak_voltage_V: r.peak_voltage_V,
+            temp_celsius: r.temp_celsius,
+            batt_V: r.batt_V,
         })
         .collect();
     Reading::insert_many(&readings, &conn).map(|_| Message::new("successfully added readings"))
