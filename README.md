@@ -44,7 +44,7 @@ $ curl \
     "status":"success",
     "message":"got user token",
     "data":{
-        "token":"DTYZYI5YSsH7hnIZrofhe2HhsaI4yZfgiPgED6pHSToiQI0wHWz9RqK8oPaZ3sMV"
+        "token":"user-DTYZYI5YSsH7hnIZrofhe2HhsaI4yZfgiPgED6pHSToiQI0wHWz9RqK8oPaZ3sMV"
     }
 }
 ```
@@ -87,7 +87,7 @@ provide must correspond to the sensor's owner.
 $ curl \
     https://solsensor.com/api/sensor_token \
     -XPOST \
-    -H'Authorization: bearer DTYZYI5YSsH7hnIZrofhe2HhsaI4yZfgiPgED6pHSToiQI0wHWz9RqK8oPaZ3sMV' \
+    -H'Authorization: bearer user-DTYZYI5YSsH7hnIZrofhe2HhsaI4yZfgiPgED6pHSToiQI0wHWz9RqK8oPaZ3sMV' \
     -H'Content-Type: application/json' \
     --data '{"id":1,"owner_id":1,"hardware_id":1234567}'
 
@@ -95,7 +95,7 @@ $ curl \
     "message":"got sensor token",
     "status":"success",
     "data":{
-        "token":"XY1cvYRLkrJFlIEQMyr03TWPeIzGsYIvriLySNJ4MI37SNpHWpBTVgy18ws7T9Ix"
+        "token":"sensor-XY1cvYRLkrJFlIEQMyr03TWPeIzGsYIvriLySNJ4MI37SNpHWpBTVgy18ws7T9Ix"
     }
 }
 ```
@@ -108,7 +108,7 @@ Once you have a sensor token, you can add a reading.
 $ curl \
     https://solsensor.com/api/add_reading \
     -XPOST \
-    -H'Authorization: bearer XY1cvYRLkrJFlIEQMyr03TWPeIzGsYIvriLySNJ4MI37SNpHWpBTVgy18ws7T9Ix' \
+    -H'Authorization: bearer sensor-XY1cvYRLkrJFlIEQMyr03TWPeIzGsYIvriLySNJ4MI37SNpHWpBTVgy18ws7T9Ix' \
     -H'Content-Type: application/json' \
     --data '{"voltage":1.23}'
 
@@ -124,7 +124,7 @@ You can also add multiple readings at once.
 $ curl \
     https://solsensor.com/api/add_readings \
     -XPOST \
-    -H'Authorization: bearer XY1cvYRLkrJFlIEQMyr03TWPeIzGsYIvriLySNJ4MI37SNpHWpBTVgy18ws7T9Ix' \
+    -H'Authorization: bearer sensor-XY1cvYRLkrJFlIEQMyr03TWPeIzGsYIvriLySNJ4MI37SNpHWpBTVgy18ws7T9Ix' \
     -H'Content-Type: application/json' \
     --data '[{"voltage":1.23},{"voltage:4.56"}]'
 
