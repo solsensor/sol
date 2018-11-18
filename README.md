@@ -80,8 +80,8 @@ sensor there.
 
 Some actions (like adding a new reading) can only be performed by sensors. These
 endpoints are authenticated via a sensor token. To get a sensor token, you need
-to specify the sensor for which you want to get a token, and the user token you
-provide must correspond to the sensor's owner.
+to specify the hardware id of the sensor for which you want to get a token, and
+the user token you provide must correspond to the sensor's owner.
 
 ```
 $ curl \
@@ -89,7 +89,7 @@ $ curl \
     -XPOST \
     -H'Authorization: bearer user-DTYZYI5YSsH7hnIZrofhe2HhsaI4yZfgiPgED6pHSToiQI0wHWz9RqK8oPaZ3sMV' \
     -H'Content-Type: application/json' \
-    --data '{"id":1,"owner_id":1,"hardware_id":1234567}'
+    --data '{"hardware_id":1234567}'
 
 {
     "message":"got sensor token",

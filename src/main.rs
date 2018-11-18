@@ -284,14 +284,20 @@ fn get_users(conn: SolDbConn) -> echain::Result<Data> {
     User::all(&conn).map(|users| Data::new("found all users", json!({ "users": users })))
 }
 
-#[post("/sensor_token", format = "application/json", data = "<sensor>")]
+#[derive(Deserialize)]
+struct SensorHardwareId {
+    hardware_id: i32,
+}
+
+#[post("/sensor_token", format = "application/json", data = "<sensor_hw_id>")]
 fn get_sensor_token(
     auth: UserTokenAuth,
     conn: SolDbConn,
-    sensor: Json<SensorQuery>,
+    sensor_hw_id: Json<SensorHardwareId>,
 ) -> echain::Result<Data> {
     let user = auth.0;
-    let sensor = sensor.0;
+    let hardware_id = sensor_hw_id.0.hardware_id;
+    let sensor = Sensor::find_by_hardware_id(hardware_id, &conn)?;
     if user.id == sensor.owner_id {
         let token = Token::new_sensor_token(sensor);
         Token::insert(&token, &conn)

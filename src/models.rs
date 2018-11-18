@@ -252,6 +252,20 @@ impl Sensor {
             .map_err(|e| e.into())
     }
 
+    pub fn find_by_hardware_id(
+        hardware_id: i32,
+        conn: &SqliteConnection,
+    ) -> echain::Result<SensorQuery> {
+        use super::schema::sensors::dsl::{
+            active as sensor_active, hardware_id as sensor_hardware_id, sensors as all_sensors,
+        };
+        all_sensors
+            .filter(sensor_hardware_id.eq(hardware_id))
+            .filter(sensor_active.eq(true))
+            .first(conn)
+            .map_err(|e| e.into())
+    }
+
     pub fn find_for_user(
         user_id: i32,
         conn: &SqliteConnection,
