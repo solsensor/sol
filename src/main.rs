@@ -107,7 +107,7 @@ fn index() -> Template {
 }
 
 #[get("/users")]
-fn users(conn: SolDbConn) -> Template {
+fn users(conn: SolDbConn, _user: UserCookieAuth) -> Template {
     let users = User::all(&conn).ok();
     let ctx = TemplateCtx {
         title: String::from("Users"),
@@ -286,7 +286,7 @@ fn get_users(conn: SolDbConn) -> echain::Result<Data> {
 
 #[derive(Deserialize)]
 struct SensorHardwareId {
-    hardware_id: i32,
+    hardware_id: i64,
 }
 
 #[post("/sensor_token", format = "application/json", data = "<sensor_hw_id>")]
@@ -516,7 +516,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for UserCookieAuth {
 
 #[derive(Serialize, Deserialize)]
 struct CreateSensor {
-    hardware_id: i32,
+    hardware_id: i64,
 }
 
 #[post("/add_sensor", format = "application/json", data = "<data>")]

@@ -15,7 +15,7 @@ table! {
     sensors (id) {
         id -> Integer,
         owner_id -> Integer,
-        hardware_id -> Integer,
+        hardware_id -> BigInt,
         active -> Bool,
     }
 }
@@ -41,9 +41,4 @@ table! {
 joinable!(sensors -> users (owner_id));
 joinable!(tokens -> users (user_id));
 
-allow_tables_to_appear_in_same_query!(
-    readings,
-    sensors,
-    tokens,
-    users,
-);
+allow_tables_to_appear_in_same_query!(readings, sensors, tokens, users,);

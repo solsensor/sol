@@ -227,14 +227,14 @@ impl Token {
 #[table_name = "sensors"]
 pub struct SensorInsert {
     pub owner_id: i32,
-    pub hardware_id: i32,
+    pub hardware_id: i64,
 }
 
 #[derive(Serialize, Deserialize, Queryable, Debug)]
 pub struct SensorQuery {
     pub id: i32,
     pub owner_id: i32,
-    pub hardware_id: i32,
+    pub hardware_id: i64,
     pub active: bool,
 }
 
@@ -253,7 +253,7 @@ impl Sensor {
     }
 
     pub fn find_by_hardware_id(
-        hardware_id: i32,
+        hardware_id: i64,
         conn: &SqliteConnection,
     ) -> echain::Result<SensorQuery> {
         use super::schema::sensors::dsl::{
