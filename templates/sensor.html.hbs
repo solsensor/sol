@@ -15,7 +15,16 @@
 		readings:
 		<ul>
 		  {{#each readings}}
-		  <li>id={{id}}, voltage={{voltage}}</li>
+		  <li>
+			id: {{id}}
+			<ul>
+			  <li>peak_power_mW: {{peak_power_mW}}</li>
+			  <li>peak_current_mA: {{peak_current_mA}}</li>
+			  <li>peak_voltage_V: {{peak_voltage_V}}</li>
+			  <li>temp_celsius: {{temp_celsius}}</li>
+			  <li>batt_V: {{batt_V}}</li>
+			</ul>
+		  </li>
 		  {{/each}}
 		</ul>
 	  </li>
