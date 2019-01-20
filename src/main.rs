@@ -48,7 +48,7 @@ mod echain {
     };
     use std::io::Cursor;
 
-    error_chain!{
+    error_chain! {
         foreign_links {
             Diesel(::diesel::result::Error);
         }
