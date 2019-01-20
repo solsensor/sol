@@ -13,9 +13,9 @@
 	  <li>
 		sensors:
 		<ul>
-		  {{#each sensors}}
-		  <li><a href="/sensor/{{id}}">{{id}}</a></li>
-		  {{/each}}
+		  {% for sensor in sensors %}
+		  <li><a href="/sensor/{{sensor.id}}">{{sensor.id}}</a></li>
+		  {% endfor %}
 		</ul>
 	  </li>
 	</ul>

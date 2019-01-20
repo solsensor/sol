@@ -8,9 +8,9 @@
     <h1>{{title}}</h1>
 	<p>This page shows the currently registered users</p>
 	<ul>
-	  {{#each users}}
-	  <li><a href="/user/{{email}}">{{email}}</a></li>
-	  {{/each}}
+	  {% for u in users %}
+	  <li><a href="/user/{{u.email}}">{{u.email}}</a></li>
+	  {% endfor %}
 	</ul>
   </body>
 </html>
