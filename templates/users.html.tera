@@ -1,16 +1,9 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <title>{{title}}</title>
-  </head>
-  <body>
-    <h1>{{title}}</h1>
+{% extends "base" %}
+{% block body %}
 	<p>This page shows the currently registered users</p>
 	<ul>
 	  {% for u in users %}
 	  <li><a href="/user/{{u.email}}">{{u.email}}</a></li>
 	  {% endfor %}
 	</ul>
-  </body>
-</html>
+{% endblock body %}
