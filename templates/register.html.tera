@@ -1,9 +1,34 @@
 {% extends "base" %}
 {% block body %}
-	<p>This page allows you to register a new user</p>
-	<form action="/register" method="post">
-	  Email:<input type="text" name="email">
-	  Password:<input type="password" name="password">
-	  <input type="submit" value="Register">
-	</form>
+<section class="section">
+  <div class="container">
+
+	<p class="title">Sign up</p>
+
+	<div class="box">
+	  <form action="/register" method="post">
+	  <div class="field">
+		<label class="label">Email</label>
+		<div class="control">
+		  <input class="input" type="text" name="email" placeholder="email">
+		</div>
+	  </div>
+
+	  <div class="field">
+		<label class="label">Password</label>
+		<div class="control">
+		  <input class="input" type="password" name="password" placeholder="password">
+		</div>
+	  </div>
+
+	  <div class="field">
+		<div class="control">
+		  <input class="button is-primary has-text-weight-bold" type="submit" value="Submit">
+		</div>
+	  </div>
+	  </form>
+	</div>
+
+  </div>
+</section>
 {% endblock body %}
