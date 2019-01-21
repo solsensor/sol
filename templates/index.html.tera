@@ -1,10 +1,5 @@
 {% extends "base" %}
 {% block body %}
 	<p>This is the index page content</p>
-	<ul>
-	  <li><a href="/users">Users Page</a></li>
-	  <li><a href="/login">Sign In</a></li>
-	  <li><a href="/register">Create An Account</a></li>
-	</ul>
 	<p>For more details on the api, see the README in the <a href="https://github.com/solsensor/sol">github repo</a></p>
 {% endblock body %}
