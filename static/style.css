@@ -5,15 +5,6 @@ html, body {
 	height: 100%;
 }
 
-nav.navbar {
-	border-top: 4px solid #276cda;
-	margin-bottom: 1rem;
-}
-
-.navbar-item.brand-text {
-	font-weight: 300;
-}
-
 .navbar-item.text-link, .navbar-link.text-link {
 	font-size: 14px;
 	font-weight: 700;
