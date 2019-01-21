@@ -1,5 +1,57 @@
 {% extends "base" %}
 {% block body %}
-	<p>This is the index page content</p>
-	<p>For more details on the api, see the README in the <a href="https://github.com/solsensor/sol">github repo</a></p>
+<section class="hero is-primary">
+  <div class="hero-body">
+	<div class="container">
+	  <p class="title">Data-Driven</p>
+	  <p class="subtitle">Deploy your solar panel with <strong>confidence</strong></p>
+	</div>
+  </div>
+</section>
+<section class="section">
+  <div class="container">
+	<div class="columns">
+	  <div class="column">
+		<p class="title">Info One</p>
+		<p>Lorem ipsum dolor sit amet, this is just some placeholder text. Talk about a great feature of our product.</p>
+	  </div>
+	  <div class="column">
+		<p class="title">Info Two</p>
+		<p>Lorem ipsum dolor sit amet, this is just some placeholder text. Talk about another great feature of our product.</p>
+	  </div>
+	  <div class="column">
+		<p class="title">Info Three</p>
+		<p>Lorem ipsum dolor sit amet, this is just some placeholder text. People really love our product, and this is why.</p>
+	  </div>
+	</div>
+  </div>
+</section>
+<section class="section">
+  <div class="level">
+	<div class="level-item has-text-centered">
+	  <div>
+		<p class="heading">Sensors Deployed</p>
+		<p class="title">123.45</p>
+	  </div>
+	</div>
+	<div class="level-item has-text-centered">
+	  <div>
+		<p class="heading">Readings Taken</p>
+		<p class="title">987.65M</p>
+	  </div>
+	</div>
+	<div class="level-item has-text-centered">
+	  <div>
+		<p class="heading">Money Saved</p>
+		<p class="title">$1B</p>
+	  </div>
+	</div>
+	<div class="level-item has-text-centered">
+	  <div>
+		<p class="heading">Fake Data?</p>
+		<p class="title">YES</p>
+	  </div>
+	</div>
+  </div>
+</section>
 {% endblock body %}
