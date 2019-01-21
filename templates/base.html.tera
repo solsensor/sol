@@ -4,18 +4,46 @@
     <meta charset="utf-8" />
 	<link rel="stylesheet" href="/static/bulma.min.css">
 	<link rel="stylesheet" href="/static/style.css">
+	<link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,700" rel="stylesheet">
 	<script src="/static/turbolinks.js" type="text/javascript"></script>
     <title>{{title}}</title>
   </head>
   <body>
+	<nav class="navbar">
+	  <div class="container">
+		<div class="navbar-brand">
+		  <a class="navbar-item brand-text" href="/">SOL Sensor</a>
+		  <a class="navbar-burger" data-target="navbarMenu">
+			<span></span>
+			<span></span>
+			<span></span>
+		  </a>
+		</div>
+		<div id="navbarMenu" class="navbar-menu">
+		  <div class="navbar-start">
+			<a class="navbar-item text-link" href="/users">Users</a>
+			<div class="navbar-item has-dropdown is-hoverable">
+			  <a class="navbar-link text-link">More</a>
+			  <div class="navbar-dropdown">
+				<a class="navbar-item">About</a>
+				<a class="navbar-item">Contact</a>
+				<hr class="navbar-divider"/>
+				<a class="navbar-item">Report an issue</a>
+			  </div>
+			</div>
+		  </div>
+		  <div class="navbar-end">
+			<div class="navbar-item">
+			  <div class="buttons">
+				<a class="button is-primary"><strong>Sign up</strong></a>
+				<a class="button is-light">Log in</a>
+			  </div>
+			</div>
+		  </div>
+		</div>
+	  </div>
+	</nav>
     <h1>{{title}}</h1>
-	<hr/>
 	{% block body %}{% endblock body %}
-	<hr/>
-	<ul>
-	  <li><a href="/users">Users Page</a></li>
-	  <li><a href="/login">Sign In</a></li>
-	  <li><a href="/register">Create An Account</a></li>
-	</ul>
   </body>
 </html>
