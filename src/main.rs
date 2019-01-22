@@ -170,7 +170,7 @@ fn login_post(
 ) -> echain::Result<Redirect> {
     let creds = creds.into_inner();
     let user = User::verify_password(&creds.email, &creds.password, &conn)?;
-    cookies.add(
+    cookies.add_private(
         Cookie::build("user_token", "this_is_an_api_key")
             .path("/")
             .finish(),
