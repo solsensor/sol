@@ -47,7 +47,7 @@
 	{% block body %}{% endblock body %}
 	<footer class="footer">
 	  <div class="content has-text-centered">
-		<p><strong>SOL</strong> by Jake Wachlin & Ryan Chipman</p>
+		<p>Copyright 2018 Jake Wachlin & Ryan Chipman</p>
 		<span class="icon"><i class="fab fa-lg fa-github"></i></span>
 		<span class="icon"><i class="fas fa-lg fa-book"></i></span>
 	  </div>
