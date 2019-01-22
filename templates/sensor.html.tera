@@ -1,27 +1,37 @@
 {% extends "base" %}
 {% block body %}
-	<p>This page shows details about the sensor "{{sensor.id}}"</p>
-	<ul>
-	  <li>id: {{sensor.id}}</li>
-	  <li>owner_id: {{sensor.owner_id}}</li>
-	  <li>hardware_id: {{sensor.hardware_id}}</li>
-	  <li>
-		readings:
-		<ul>
-		  {% for r in readings %}
-		  <li>
-			id: {{r.id}}
-			<ul>
-			  <li>timestamp: {{r.timestamp}}</li>
-			  <li>peak_power_mW: {{r.peak_power_mW}}</li>
-			  <li>peak_current_mA: {{r.peak_current_mA}}</li>
-			  <li>peak_voltage_V: {{r.peak_voltage_V}}</li>
-			  <li>temp_celsius: {{r.temp_celsius}}</li>
-			  <li>batt_V: {{r.batt_V}}</li>
-			</ul>
-		  </li>
-		  {% endfor %}
-		</ul>
-	  </li>
-	</ul>
+<section class="section">
+  <div class="container">
+	<p class="title">Sensor {{sensor.id}}</p>
+	<div class="box">
+	  <p>id: {{sensor.id}}</p>
+	  <p>owner_id: {{sensor.owner_id}}</p>
+	  <p>hardware_id: {{sensor.hardware_id}}</p>
+	</div>
+	<table class="table">
+      <thead>
+		<tr>
+		  <th>timestamp</th>
+		  <th>peak_power_mW</th>
+		  <th>peak_current_mA</th>
+		  <th>peak_voltage_V</th>
+		  <th>temp_celsius</th>
+		  <th>batt_V</th>
+		</tr>
+	  </thead>
+	  <tbody>
+		{% for r in readings %}
+		<tr>
+		  <td>{{r.timestamp}}</td>
+		  <td>{{r.peak_power_mW}}</td>
+		  <td>{{r.peak_current_mA}}</td>
+		  <td>{{r.peak_voltage_V}}</td>
+		  <td>{{r.temp_celsius}}</td>
+		  <td>{{r.batt_V}}</td>
+		</tr>
+		{% endfor %}
+	  </tbody>
+	</table>
+  </div>
+</section>
 {% endblock body %}
