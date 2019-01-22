@@ -1,16 +1,27 @@
 {% extends "base" %}
 {% block body %}
-	<p>This page shows details about the user "{{user.email}}"</p>
-	<ul>
-	  <li>id: {{user.id}}</li>
-	  <li>email address: {{user.email}}</li>
-	  <li>
-		sensors:
-		<ul>
-		  {% for sensor in sensors %}
-		  <li><a href="/sensor/{{sensor.id}}">{{sensor.id}}</a></li>
-		  {% endfor %}
-		</ul>
-	  </li>
-	</ul>
+<section class="section">
+  <div class="container">
+	<p class="title">{{user.email}}</p>
+	<div class="box">
+	  <p>id: {{user.id}}</p>
+	  <p>email: {{user.email}}</p>
+	</div>
+  </div>
+</section>
+<section class="section">
+  <div class="container">
+	<p class="title">Sensors</p>
+	<div class="tile is-ancestor">
+      <div class="tile is-parent">
+		{% for sensor in sensors %}
+        <article class="tile is-child notification is-primary is-3">
+		  <p class="title">Sensor {{sensor.id}}</p>
+		  <a class="subtitle" href="/sensor/{{sensor.id}}">Click to view</a>
+		</article>
+		{% endfor %}
+      </div>
+	</div>
+  </div>
+</section>
 {% endblock body %}
