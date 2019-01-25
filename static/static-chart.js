@@ -1,4 +1,4 @@
-var vlSpec = {
+var batterySpec = {
 	$schema: 'https://vega.github.io/schema/vega-lite/v3.json',
 	description: 'Battery voltage over time',
 	data: {
@@ -27,5 +27,66 @@ var vlSpec = {
 		},
 	}
 };
+vegaEmbed('#chart-battery', batterySpec);
 
-vegaEmbed('#chart', vlSpec);
+var powerSpec = {
+	$schema: 'https://vega.github.io/schema/vega-lite/v3.json',
+	description: 'Battery voltage over time',
+	data: {
+		values: [
+			{ timestamp: 1542513093, batt_V: 1.2300000190734863 },
+			{ timestamp: 1542513094, batt_V: 1.3300000190734863 },
+			{ timestamp: 1542513095, batt_V: 1.2300000190734863 },
+			{ timestamp: 1542513098, batt_V: 1.4300000190734863 },
+			{ timestamp: 1542513099, batt_V: 1.1300000190734863 },
+		]
+	},
+	mark: {
+		type: 'line',
+		point: true,
+	},
+	encoding: {
+		x: {
+			field: 'timestamp',
+			type: 'quantitative',
+			axis: { title: 'timestamp (unix)' },
+		},
+		y: {
+			field: 'batt_V',
+			type: 'quantitative',
+			axis: { title: 'peak power (mW)' },
+		},
+	}
+};
+vegaEmbed('#chart-power', powerSpec);
+
+var tempSpec = {
+	$schema: 'https://vega.github.io/schema/vega-lite/v3.json',
+	description: 'Battery voltage over time',
+	data: {
+		values: [
+			{ timestamp: 1542513093, batt_V: 1.2300000190734863 },
+			{ timestamp: 1542513094, batt_V: 1.3300000190734863 },
+			{ timestamp: 1542513095, batt_V: 1.2300000190734863 },
+			{ timestamp: 1542513098, batt_V: 1.4300000190734863 },
+			{ timestamp: 1542513099, batt_V: 1.1300000190734863 },
+		]
+	},
+	mark: {
+		type: 'line',
+		point: true,
+	},
+	encoding: {
+		x: {
+			field: 'timestamp',
+			type: 'quantitative',
+			axis: { title: 'timestamp (unix)' },
+		},
+		y: {
+			field: 'batt_V',
+			type: 'quantitative',
+			axis: { title: 'temp (C)' },
+		},
+	}
+};
+vegaEmbed('#chart-temp', tempSpec);
