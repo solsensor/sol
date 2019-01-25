@@ -1,26 +1,29 @@
 var vlSpec = {
 	$schema: 'https://vega.github.io/schema/vega-lite/v3.json',
+	description: 'Battery voltage over time',
 	data: {
 		values: [
-			{a: 'C', b: 2},
-			{a: 'C', b: 7},
-			{a: 'C', b: 4},
-			{a: 'D', b: 1},
-			{a: 'D', b: 2},
-			{a: 'D', b: 6},
-			{a: 'E', b: 8},
-			{a: 'E', b: 4},
-			{a: 'E', b: 7},
+			{ timestamp: 1542513093, batt_V: 1.2300000190734863 },
+			{ timestamp: 1542513094, batt_V: 1.3300000190734863 },
+			{ timestamp: 1542513095, batt_V: 1.2300000190734863 },
+			{ timestamp: 1542513098, batt_V: 1.4300000190734863 },
+			{ timestamp: 1542513099, batt_V: 1.1300000190734863 },
 		]
 	},
-	mark: 'bar',
+	mark: {
+		type: 'line',
+		point: true,
+	},
 	encoding: {
-		y: {field: 'a', type: 'nominal'},
 		x: {
-			aggregate: 'average',
-			field: 'b',
+			field: 'timestamp',
 			type: 'quantitative',
-			axis: { title: 'Average of b' },
+			axis: { title: 'timestamp (unix)' },
+		},
+		y: {
+			field: 'batt_V',
+			type: 'quantitative',
+			axis: { title: 'battery (V)' },
 		},
 	}
 };
