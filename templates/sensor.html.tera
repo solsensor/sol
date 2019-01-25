@@ -8,6 +8,7 @@
 	  <p>owner_id: {{sensor.owner_id}}</p>
 	  <p>hardware_id: {{sensor.hardware_id}}</p>
 	</div>
+	<div id="chart"></div>
 	<table class="table">
       <thead>
 		<tr>
@@ -34,4 +35,8 @@
 	</table>
   </div>
 </section>
+<script type="text/javascript" src="/static/vega-4.js"></script>
+<script type="text/javascript" src="/static/vega-lite-3.js"></script>
+<script type="text/javascript" src="/static/vega-embed-3.js"></script>
+<script type="text/javascript" src="/static/static-chart.js"></script>
 {% endblock body %}
