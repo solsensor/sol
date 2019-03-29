@@ -283,6 +283,16 @@ fn get_users(conn: SolDbConn) -> echain::Result<Data> {
     User::all(&conn).map(|users| Data::new("found all users", json!({ "users": users })))
 }
 
+#[get("/sensor/<id>/readings?<start>&<end>")]
+fn get_readings(id: i32, start: i32, end: i32, conn: SolDbConn) -> echain::Result<Data> {
+    Reading::find_for_sensor_in_time_range(id, start, end, &conn).map(|readings| {
+        Data::new(
+            "found all readings for sensor in range",
+            json!({ "readings": readings }),
+        )
+    })
+}
+
 #[derive(Deserialize)]
 struct SensorHardwareId {
     hardware_id: i64,
@@ -559,6 +569,7 @@ fn rocket() -> Rocket {
                 add_sensor,
                 add_reading,
                 add_readings,
+                get_readings,
             ],
         )
         .mount("/static", routes![files])

@@ -65,6 +65,24 @@ impl Reading {
             .load(conn)
             .map_err(|e| e.into())
     }
+
+    pub fn find_for_sensor_in_time_range(
+        sensor_id: i32,
+        start: i32,
+        end: i32,
+        conn: &SqliteConnection,
+    ) -> echain::Result<Vec<ReadingQuery>> {
+        use super::schema::readings::dsl::{
+            readings as all_readings, sensor_id as reading_sensor_id,
+            timestamp as reading_timestamp,
+        };
+        all_readings
+            .filter(reading_sensor_id.eq(sensor_id))
+            .filter(reading_timestamp.gt(start))
+            .filter(reading_timestamp.lt(end))
+            .load(conn)
+            .map_err(|e| e.into())
+    }
 }
 
 #[derive(Insertable, Serialize, Deserialize, FromForm)]
