@@ -12,69 +12,82 @@
 
   tasks:
     - name: Upgrade system
+      tags: [ provision ]
       apt: upgrade=dist update_cache=yes
 
     - name: Install nginx
+      tags: [ provision ]
       apt: name=nginx state=latest
 
     - name: install letsencrypt
+      tags: [ provision ]
       apt: name=letsencrypt state=latest
 
     - name: create letsencrypt directory
+      tags: [ provision ]
       file: name=/var/www/letsencrypt state=directory
 
     - name: Remove default nginx config
+      tags: [ provision ]
       file: name=/etc/nginx/sites-enabled/default state=absent
 
     - name: Install system nginx config
+      tags: [ provision ]
       template:
         src: templates/nginx.conf.j2
         dest: /etc/nginx/nginx.conf
 
     - name: Install nginx site for letsencrypt requests
+      tags: [ provision ]
       template:
         src: templates/nginx-http.j2
         dest: /etc/nginx/sites-enabled/http
 
     - name: Reload nginx to activate letsencrypt site
+      tags: [ provision ]
       service: name=nginx state=restarted
 
     - name: Create letsencrypt certificate
+      tags: [ provision ]
       shell: letsencrypt certonly -n --webroot -w /var/www/letsencrypt -m {{ letsencrypt_email }} --agree-tos -d {{ domain_name }}
       args:
         creates: /etc/letsencrypt/live/{{ domain_name }}
 
     - name: Generate dhparams
+      tags: [ provision ]
       shell: openssl dhparam -out /etc/nginx/dhparams.pem 2048
       args:
         creates: /etc/nginx/dhparams.pem
 
     - name: Install nginx site for specified site
+      tags: [ provision ]
       template:
         src: templates/nginx-le.j2
         dest: /etc/nginx/sites-enabled/le
 
     - name: Reload nginx to activate specified site
+      tags: [ provision ]
       service: name=nginx state=restarted
 
     - name: Add letsencrypt cronjob for cert renewal
+      tags: [ provision ]
       cron:
         name: letsencrypt_renewal
         special_time: weekly
         job: letsencrypt --renew certonly -n --webroot -w /var/www/letsencrypt -m {{ letsencrypt_email }} --agree-tos -d {{ domain_name }} && service nginx reload
 
     - name: Ensure landing page dir exists
-      tags: [deploy]
+      tags: [ deploy ]
       file:
         path: /var/www/{{ domain_name }}
         state: directory
 
     - name: Copy landing page to server
-      tags: [deploy]
+      tags: [ deploy ]
       copy:
         src: ../landing/landing.html
         dest: /var/www/{{ domain_name }}/index.html
 
     - name: Reload nginx to make landing page available
-      tags: [deploy]
+      tags: [ deploy ]
       service: name=nginx state=restarted
