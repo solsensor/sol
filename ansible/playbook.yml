@@ -85,8 +85,10 @@
     - name: Copy landing page to server
       tags: [ deploy ]
       copy:
-        src: ../landing/landing.html
-        dest: /var/www/{{ domain_name }}/index.html
+        src: '{{ item }}'
+        dest: /var/www/{{ domain_name }}/
+      with_fileglob:
+        - ../landing/*
 
     - name: Reload nginx to make landing page available
       tags: [ deploy ]
