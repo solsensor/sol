@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>FAQ - Sol Sensor</title>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+        <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+        <!-- Bulma Version 0.7.4-->
+        <link rel="stylesheet" href="https://unpkg.com/bulma@0.7.4/css/bulma.min.css" />
+        <link rel="stylesheet" type="text/css" href="/style.css">
+        <link rel="stylesheet" href="https://unpkg.com/bulma-modal-fx/dist/css/modal-fx.min.css" />
+    </head>
+    <body>
+        <section class="hero is-info is-medium is-bold">
+	  <div class="hero-head">
+		<nav class="navbar">
+          <div class="container">
+            <div class="navbar-brand">
+              <a class="navbar-item brand-text" href="/">Sol Sensor</a>
+            </div>
+			<div class="navbar-menu">
+			  <div class="navbar-end">
+				<div class="tabs is-right">
+				  <ul>
+					<li><a href="/">Home</a></li>
+					<li><a href="#subscribe">Subscribe</a></li>
+					<li class="is-active"><a href="#faq">FAQ</a></li>
+				  </ul>
+				</div>
+			  </div>
+			</div>
+          </div>
+		</nav>
+	  </div>
+            <div class="hero-body">
+                <div class="container has-text-centered">
+                    <h1 class="title">
+                      Sol: Resources and FAQ
+                    </h1>
+                </div>
+            </div>
+        </section>
+
+    <section class="section" id="solar">
+	  <div class="container">
+	  <div class="content">
+		<h1>How solar works</h1>
+		<p>Solar power actually comes in a few forms. The one most people think of is photovoltaic power. Photovoltaic devices directly transform the energy in sunlight into electricity. These are the black, rigid panels that are synonymous with solar power. Another common approach of using solar energy is solar water heaters. Water is typically moved through dark, energy absorbing rooftop pipes, and sunlight heats the water directly. No electricity is generated, but this is often an efficient way to heat water in sunny areas. Another method used at an industrial scale is concentrated solar thermal power generation. Large fields of controlled mirrors concentrate sunlight to a single spot. This spot is superheated. Usually salt is melted by the heat and the thermal energy in the molten salt is used similarly to the thermal energy from coal would be: to heat water to run a steam turbine to generate electricity. Due to the large amount of heat absorbed by the salt, these systems have the advantage that they can continue to produce electricity even when the sun goes down. Of course, noone wants molten salt on their roof, so these systems are only viable at an industrial scale in sparsely populated regions. Photovoltaic power is the focus of the sol sensor, and solar power will be used to refer to photovoltaic power here.</p>
+		<p>An important thing to understand is the difference between power and energy. Feel free to skip this section if you are sure that you understand, but we want to make sure everyone is clear. Energy is usually described as the ability to do work. If you want to lift something up, that takes energy. If you want to heat something up, you need energy. If you want to accelerate some object up to speed, you need energy. Power describes how fast you can do the work. While both a Honda hatchback and a Ferrari can drive at 60mph, we know that the more powerful Ferrari can get there much quicker. Both energy and power have a wide variety of units. Within the energy industry, power is usually in Watts (W), and energy is in kilowatt-hours (kWh). These units flip the prior description around. Power is how fast we can release, use, or generate energy. The corollary is that energy is some amount of power over some amount of time. If you use a 1 kW space heater for 1 hour, it uses 1 kWh of energy.</p>
+		<p>Most residential systems are grid-connected. Some have backup battery storage, but few are fully off-grid. This is critically important to understanding how solar systems must be sized. When you use your air conditioning, lighting, or household appliances, the amount of power you need at any given point in time is the amount of power your power supplier must provide. When you are grid-connected, this is usually not a problem. The grid can adapt to provide you with any amount of power, within reason. But if you only have a solar system, it must be able to provide the amount of power you need at any given point in time. Note we are only referring to power here. Even if you have a solar system that, over time, can produce as much energy as you use, if it cannot always meet your power requirements then you will not always be able to keep the lights on. If the system is grid connected, if it is producing more power than you need it can often feed that power back into the grid for other people to use (depending on your local utility and local laws.) This ties in nicely to how residential solar systems are sized.</p>
+		<p>One major confusion with solar power is how it is rated. Typically solar systems are described in terms of power, which refers to the system’s peak power production. This value is directly related to the system’s physical size, and traditionally fossil fuel or nuclear power plants have been rated according to power. However, rating solar systems by power is arguably disingenuous. The problem is that the sun does not always shine, and even when it does, a large number of factors can result in less than peak power. These factors include weather, local obstruction due to buildings or trees, and your location on Earth. Because of this, there is a different value that is used to describe power plants that is useful for solar system rating. This is the “capacity factor.” To calculate it, we take the actual energy generated by a system and divide it by the maximum energy a system could produce over a period of time. This provides a value which describes how often the solar system if producing power. According to the U.S. Energy Information Administration (EIA), in 2018 nuclear power plants had a capacity factor of 0.926, and utility scale photovoltaics had a capacity factor of 0.261. Therefore if we need a 2 GW nuclear plant to produce some amount of energy, we would need 7.1 GW of photovoltaics to produce the same amount of energy. Of course, this also assumes we can store the extra power from the solar system to keep the lights on when the sun goes down. Unfortunately, for residential solar, the case is actually more challenging. Utility scale solar is targeted to locations with lots of sun, in the U.S. usually the southwest of the country. Unless you move, you have no option for where to put a residential solar installation. And depending on where you live, the capacity factor can be much worse. For example, the Westfield Solar Park in Westfield, MA is rated at 4.5MW, and in 2017 produced 5,408 MWh of energy according to the EIA. This is a capacity factor of 0.137, or about half of the utility scale US average. The reason this is important is that a 5 KW system to a person in southern California is no the same as a 5 KW system to a person in Illinois. The Sol sensor aims to solve this problem, by providing clear estimates of energy production where you live.</p>
+		<p>There are often articles in the news about new technological breakthroughs in the efficiency of solar panels. However, efficiency is often misunderstood. The efficiency of a photovoltaic cell refers to how much electrical power is generated compared to amount of energy in the incident sunlight. The best current commercial efficiencies are around 20%, although this does not account for energy loses in other power handling components of the solar system, such as the inverter or power transmission losses. Efficiency matters a lot for traditional power plants. A coal plant that is 30% efficient uses half the coal as one that is 15% efficient to produce the same power, and therefore operational costs and emissions are reduced. However, sunlight is free, abundant, and not using it does not add emissions. Efficiency in solar cells matters if the available space is small (such as for spacecraft or a small roof). Efficiency also matters for life-cycle net emissions calculations. However, if you have a large roof, efficiency of the panels likely is not a large concern.</p>
+		<p>A really critical misunderstanding of many forms of renewable or green energy relates to their environmental friendliness. It is true that while operating, solar panels produce no emissions. Of course, just like anything humans build, production of solar panels does produce emissions and create pollution and solar panels have limited lifespans. If we really care about the environment, we must consider the whole picture. Consider two unrealistic, yet insightful cases. First, imagine we build a solar panel, which requires significant energy to produce (melting and purifying the silicon is difficult) and then place it inside a dark room. Clearly we would be better off from an emissions perspective having never built it. Second, imaging we build a solar panel, and place it in a very sunny location, but its efficiency is 0.0001%. Again, we would be better off not making this device. These are unfair comparisons, but they show the problem: if we do not take care what panels we use, how they are produced, and where we use them, our efforts to go green could make things worse. The Sol sensor aims to answer if solar makes sense for you from both an economic AND ecological perspective.</p>
+	  </div>
+	  </div>
+    </section>
+
+    <section class="section" id="financing">
+	  <div class="container">
+	  <div class="content">
+		<h1>How you save money</h1>
+		<p>Solar saves you money because sunlight is free, but you already knew that. The truth is that the amount you will save is a very complex question. Residential rooftop solar is available in most states through a variety of payment methods. The first, most obvious option is to buy the solar system outright. In terms of lifetime savings, this is usually the best option. However, at a cost of $20,000+, this isn’t an option for many people. Some solar power companies also offer financing. The cost is similar to a new car, and this payment option is similar to financing a car. You own the solar system and you pay for the loan over time, including interest. In some states, there are also leasing options. This takes two forms: a traditional lease agreement or a power purchase agreement (PPA). In both cases, the company you work with owns the solar panels (and keeps any federal, state, or local tax incentives), and you pay a monthly amount. For a leasing agreement, you pay a fixed amount each month for the power produced. Most installation companies will provide a power production estimate, and guarantee some level of production so you aren’t losing money if the system ends up producing less power than you expected. Typically, the price you pay for power will be less than you currently pay, although most lease agreements have an increasing price over time, so you must bet against future price increases for the long-term return on investment. For a PPA, you pay for the solar energy per unit of energy (kWh). Typically this is set to be lower than the current going rate of electricity in your area, so you will see an immediate reduction in cost.</p>
+		<p>Leasing solar is a relatively low-risk way to immediately lower your power bill, but over the long-run it is usually a poor investment. When you buy the system with cash or a loan, you can receive a federal tax credit up to 30% of the cost, and depending on where you live there may be state and local incentives as well. If you lease, you receive none of this.</p>
+		<p>Sol helps to bring down the risk of buying your own solar system. The Sol sensor can be placed where you are considering the install, and over time it will provide educated estimates for how much energy you realistically could produce. You can then make the investment with confidence.</p>
+	  </div>
+	  </div>
+    </section>
+
+    <section class="section" id="sol">
+	  <div class="container">
+	  <div class="content">
+		<h1>Sol: Why and how?</h1>
+		<p>We wanted to build a tool that provides hyper-local estimates of potential solar photovoltaic energy production. We put the power to make intelligent financial and ecological decisions in your hands.</p>
+		<p>The Sol sensor is a small device that can be mounted on a roof, connects to the internet, and takes high-rate measurements of the solar irradiance hitting it. Our algorithms analyze this data and make recommendations to you. The Sol sensor uses its solar panel as both a sensor and a power source. Designed from the start to be ultra-low power, Sol can run indefinitely outdoors, and can even run on its battery for months without sunlight.</p>
+	  </div>
+	  </div>
+    </section>
+
+    </body>
+</html>
