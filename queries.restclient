@@ -35,13 +35,12 @@ Content-Type: application/json
   (let (email password)
     (setq email "newuser@gmail.com")
     (setq password "mypassword")
-	(format "%s:%s" email password)
-	()
+	(base64-encode-string (format "%s:%s" email password))
   )
 )
 #
 
-POST :root/api/users/new
+POST :root/api/token
 Authorization: Basic :hash
 Content-Type: application/json
 
