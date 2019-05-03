@@ -1,7 +1,7 @@
 use super::schema::{readings, sensors, tokens, users};
 use diesel::{insert_into, prelude::*, Insertable, Queryable};
-use echain;
 use rand::Rng;
+use result::{Error, Result};
 use std::iter;
 
 #[allow(non_snake_case)]
@@ -34,7 +34,7 @@ pub struct ReadingQuery {
 pub struct Reading;
 
 impl Reading {
-    pub fn insert(reading: &ReadingInsert, conn: &SqliteConnection) -> echain::Result<usize> {
+    pub fn insert(reading: &ReadingInsert, conn: &SqliteConnection) -> Result<usize> {
         use super::schema::readings::table as readings_table;
         insert_into(readings_table)
             .values(reading)
@@ -42,10 +42,7 @@ impl Reading {
             .map_err(|e| e.into())
     }
 
-    pub fn insert_many(
-        readings: &Vec<ReadingInsert>,
-        conn: &SqliteConnection,
-    ) -> echain::Result<usize> {
+    pub fn insert_many(readings: &Vec<ReadingInsert>, conn: &SqliteConnection) -> Result<usize> {
         use super::schema::readings::table as readings_table;
         insert_into(readings_table)
             .values(readings)
@@ -53,10 +50,7 @@ impl Reading {
             .map_err(|e| e.into())
     }
 
-    pub fn find_for_sensor(
-        sensor_id: i32,
-        conn: &SqliteConnection,
-    ) -> echain::Result<Vec<ReadingQuery>> {
+    pub fn find_for_sensor(sensor_id: i32, conn: &SqliteConnection) -> Result<Vec<ReadingQuery>> {
         use super::schema::readings::dsl::{
             readings as all_readings, sensor_id as reading_sensor_id,
         };
@@ -71,7 +65,7 @@ impl Reading {
         start: i32,
         end: i32,
         conn: &SqliteConnection,
-    ) -> echain::Result<Vec<ReadingQuery>> {
+    ) -> Result<Vec<ReadingQuery>> {
         use super::schema::readings::dsl::{
             readings as all_readings, sensor_id as reading_sensor_id,
             timestamp as reading_timestamp,
@@ -103,12 +97,12 @@ pub struct UserQuery {
 pub struct User;
 
 impl User {
-    pub fn all(conn: &SqliteConnection) -> echain::Result<Vec<UserQuery>> {
+    pub fn all(conn: &SqliteConnection) -> Result<Vec<UserQuery>> {
         use super::schema::users::dsl::users as all_users;
         all_users.load::<UserQuery>(conn).map_err(|e| e.into())
     }
 
-    pub fn by_email(email: &String, conn: &SqliteConnection) -> echain::Result<UserQuery> {
+    pub fn by_email(email: &String, conn: &SqliteConnection) -> Result<UserQuery> {
         use super::schema::users::dsl::{email as user_email, users as all_users};
         all_users
             .filter(user_email.eq(email))
@@ -116,7 +110,7 @@ impl User {
             .map_err(|e| e.into())
     }
 
-    pub fn by_id(id: i32, conn: &SqliteConnection) -> echain::Result<UserQuery> {
+    pub fn by_id(id: i32, conn: &SqliteConnection) -> Result<UserQuery> {
         use super::schema::users::dsl::{id as user_id, users as all_users};
         all_users
             .filter(user_id.eq(id))
@@ -124,10 +118,10 @@ impl User {
             .map_err(|e| e.into())
     }
 
-    pub fn by_token(token: &String, conn: &SqliteConnection) -> echain::Result<UserQuery> {
+    pub fn by_token(token: &String, conn: &SqliteConnection) -> Result<UserQuery> {
         match Token::find(token, conn)?.user_id {
             Some(id) => Self::by_id(id, conn),
-            None => bail!("expected user token, got sensor token"),
+            None => Err(Error::WrongTokenType),
         }
     }
 
@@ -135,17 +129,17 @@ impl User {
         email: &String,
         password: &String,
         conn: &SqliteConnection,
-    ) -> echain::Result<UserQuery> {
+    ) -> Result<UserQuery> {
         Self::by_email(email, conn).and_then(|user| {
             if &user.password == password {
                 Ok(user)
             } else {
-                bail!("incorrect password")
+                Err(Error::IncorrectPassword)
             }
         })
     }
 
-    pub fn insert(user: &UserInsert, conn: &SqliteConnection) -> echain::Result<usize> {
+    pub fn insert(user: &UserInsert, conn: &SqliteConnection) -> Result<usize> {
         use super::schema::users::table as users_table;
         insert_into(users_table)
             .values(user)
@@ -224,7 +218,7 @@ impl Token {
         }
     }
 
-    pub fn find(token: &String, conn: &SqliteConnection) -> echain::Result<TokenQuery> {
+    pub fn find(token: &String, conn: &SqliteConnection) -> Result<TokenQuery> {
         use super::schema::tokens::dsl::{token as token_token, tokens as all_tokens};
         all_tokens
             .filter(token_token.eq(token))
@@ -232,7 +226,7 @@ impl Token {
             .map_err(|e| e.into())
     }
 
-    pub fn insert(token: &TokenInsert, conn: &SqliteConnection) -> echain::Result<usize> {
+    pub fn insert(token: &TokenInsert, conn: &SqliteConnection) -> Result<usize> {
         use super::schema::tokens::table as tokens_table;
         insert_into(tokens_table)
             .values(token)
@@ -259,7 +253,7 @@ pub struct SensorQuery {
 pub struct Sensor;
 
 impl Sensor {
-    pub fn find(id: i32, conn: &SqliteConnection) -> echain::Result<SensorQuery> {
+    pub fn find(id: i32, conn: &SqliteConnection) -> Result<SensorQuery> {
         use super::schema::sensors::dsl::{
             active as sensor_active, id as sensor_id, sensors as all_sensors,
         };
@@ -270,10 +264,7 @@ impl Sensor {
             .map_err(|e| e.into())
     }
 
-    pub fn find_by_hardware_id(
-        hardware_id: i64,
-        conn: &SqliteConnection,
-    ) -> echain::Result<SensorQuery> {
+    pub fn find_by_hardware_id(hardware_id: i64, conn: &SqliteConnection) -> Result<SensorQuery> {
         use super::schema::sensors::dsl::{
             active as sensor_active, hardware_id as sensor_hardware_id, sensors as all_sensors,
         };
@@ -284,10 +275,7 @@ impl Sensor {
             .map_err(|e| e.into())
     }
 
-    pub fn find_for_user(
-        user_id: i32,
-        conn: &SqliteConnection,
-    ) -> echain::Result<Vec<SensorQuery>> {
+    pub fn find_for_user(user_id: i32, conn: &SqliteConnection) -> Result<Vec<SensorQuery>> {
         use super::schema::sensors::dsl::{
             active as sensor_active, owner_id as sensor_owner_id, sensors as all_sensors,
         };
@@ -298,7 +286,7 @@ impl Sensor {
             .map_err(|e| e.into())
     }
 
-    pub fn insert(sensor: &SensorInsert, conn: &SqliteConnection) -> echain::Result<usize> {
+    pub fn insert(sensor: &SensorInsert, conn: &SqliteConnection) -> Result<usize> {
         use super::schema::sensors::{
             dsl::{
                 active as sensor_active, hardware_id as sensor_hardware_id, sensors as all_sensors,
@@ -314,7 +302,7 @@ impl Sensor {
             .first(conn)?;
 
         if count != 0 {
-            bail!("active sensor with that hardware_id already exists")
+            return Err(Error::DuplicateHardwareId(sensor.hardware_id));
         }
 
         insert_into(sensors_table)

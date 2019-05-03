@@ -13,10 +13,9 @@ extern crate rocket_contrib;
 extern crate serde_derive;
 #[macro_use]
 extern crate diesel;
-#[macro_use]
-extern crate error_chain;
 
 mod models;
+mod result;
 mod schema;
 #[cfg(test)]
 mod tests;
@@ -25,6 +24,7 @@ use models::{
     Reading, ReadingInsert, ReadingQuery, Sensor, SensorInsert, SensorQuery, Token, TokenQuery,
     TokenType, User, UserInsert, UserQuery,
 };
+use result::{Error, Result};
 use rocket::{
     get,
     http::{Cookie, Cookies, Status},
@@ -39,48 +39,6 @@ use std::{
     path::{Path, PathBuf},
     str::from_utf8,
 };
-
-mod echain {
-    use rocket::{
-        http::{ContentType, Status},
-        request::Request,
-        response::{Responder, Response},
-    };
-    use std::io::Cursor;
-
-    error_chain! {
-        foreign_links {
-            Diesel(::diesel::result::Error);
-        }
-    }
-
-    impl<'r> Responder<'r> for Error {
-        fn respond_to(self, _: &Request) -> ::std::result::Result<Response<'r>, Status> {
-            // Render the whole error chain to a single string
-            let mut rslt = String::new();
-            rslt += &format!("Error: {}", self);
-            self.iter()
-                .skip(1)
-                .map(|ce| rslt += &format!(", caused by: {}", ce))
-                .for_each(drop);
-
-            // Create JSON response
-            let resp = json!({
-                "status": "failure",
-                "message": rslt,
-            })
-            .to_string();
-
-            // Respond. The `Ok` here is a bit of a misnomer. It means we
-            // successfully created an error response
-            Ok(Response::build()
-                .status(Status::BadRequest)
-                .header(ContentType::JSON)
-                .sized_body(Cursor::new(resp))
-                .finalize())
-        }
-    }
-}
 
 #[derive(Serialize)]
 struct TemplateCtx {
@@ -120,7 +78,7 @@ fn users(conn: SolDbConn, _user: UserCookieAuth) -> Template {
 }
 
 #[get("/user/<email>")]
-fn user(email: String, conn: SolDbConn) -> echain::Result<Template> {
+fn user(email: String, conn: SolDbConn) -> Result<Template> {
     let user = User::by_email(&email, &conn)?;
     let sensors = Sensor::find_for_user(user.id, &conn).ok();
     let ctx = TemplateCtx {
@@ -135,7 +93,7 @@ fn user(email: String, conn: SolDbConn) -> echain::Result<Template> {
 }
 
 #[get("/sensor/<id>")]
-fn sensor(id: i32, conn: SolDbConn) -> echain::Result<Template> {
+fn sensor(id: i32, conn: SolDbConn) -> Result<Template> {
     let sensor = Sensor::find(id, &conn)?;
     let readings = Reading::find_for_sensor(sensor.id, &conn).ok();
     let ctx = TemplateCtx {
@@ -167,7 +125,7 @@ fn login_post(
     creds: Form<EmailPassword>,
     conn: SolDbConn,
     mut cookies: Cookies,
-) -> echain::Result<Redirect> {
+) -> Result<Redirect> {
     let creds = creds.into_inner();
     let user = User::verify_password(&creds.email, &creds.password, &conn)?;
     cookies.add_private(
@@ -192,7 +150,7 @@ fn register() -> Template {
 }
 
 #[post("/register", data = "<form>")]
-fn register_post(form: Form<UserInsert>, conn: SolDbConn) -> echain::Result<Redirect> {
+fn register_post(form: Form<UserInsert>, conn: SolDbConn) -> Result<Redirect> {
     let user = form.into_inner();
     User::insert(&user, &conn).map(|_count| Redirect::to(uri!(user: user.email)))
 }
@@ -274,17 +232,17 @@ mod res {
 use res::{Data, Message};
 
 #[post("/users/new", format = "application/json", data = "<user>")]
-fn add_user(user: Json<UserInsert>, conn: SolDbConn) -> echain::Result<Message> {
+fn add_user(user: Json<UserInsert>, conn: SolDbConn) -> Result<Message> {
     User::insert(&user.0, &conn).map(|_| Message::new("successfully created user"))
 }
 
 #[get("/users/all")]
-fn get_users(conn: SolDbConn) -> echain::Result<Data> {
+fn get_users(conn: SolDbConn) -> Result<Data> {
     User::all(&conn).map(|users| Data::new("found all users", json!({ "users": users })))
 }
 
 #[get("/sensor/<id>/readings?<start>&<end>")]
-fn get_readings(id: i32, start: i32, end: i32, conn: SolDbConn) -> echain::Result<Data> {
+fn get_readings(id: i32, start: i32, end: i32, conn: SolDbConn) -> Result<Data> {
     Reading::find_for_sensor_in_time_range(id, start, end, &conn).map(|readings| {
         Data::new(
             "found all readings for sensor in range",
@@ -303,7 +261,7 @@ fn get_sensor_token(
     auth: UserTokenAuth,
     conn: SolDbConn,
     sensor_hw_id: Json<SensorHardwareId>,
-) -> echain::Result<Data> {
+) -> Result<Data> {
     let user = auth.0;
     let hardware_id = sensor_hw_id.0.hardware_id;
     let sensor = Sensor::find_by_hardware_id(hardware_id, &conn)?;
@@ -312,7 +270,7 @@ fn get_sensor_token(
         Token::insert(&token, &conn)
             .map(|_count| Data::new("got sensor token", json!({"token": token.token})))
     } else {
-        bail!("user does not own sensor")
+        Err(Error::NotSensorOwner)
     }
 }
 
@@ -332,7 +290,7 @@ fn add_reading(
     auth: SensorTokenAuth,
     conn: SolDbConn,
     reading: Json<CreateReading>,
-) -> echain::Result<Message> {
+) -> Result<Message> {
     let reading = ReadingInsert {
         id: None,
         sensor_id: auth.0.id,
@@ -351,7 +309,7 @@ fn add_readings(
     auth: SensorTokenAuth,
     conn: SolDbConn,
     readings: Json<Vec<CreateReading>>,
-) -> echain::Result<Message> {
+) -> Result<Message> {
     let readings = readings
         .0
         .iter()
@@ -370,7 +328,7 @@ fn add_readings(
 }
 
 #[post("/token")]
-fn get_token(auth: BasicAuth, conn: SolDbConn) -> echain::Result<Data> {
+fn get_token(auth: BasicAuth, conn: SolDbConn) -> Result<Data> {
     let user = auth.0;
     let token = Token::new_user_token(user);
     Token::insert(&token, &conn)
@@ -513,7 +471,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for UserCookieAuth {
         let res = req
             .cookies()
             .get_private("user_token")
-            .ok_or("failed to get token".into())
+            .ok_or(Error::NoTokenInRequest)
             .map(|ck| ck.value().to_string())
             .and_then(|tok| User::by_token(&tok, &conn));
         match res {
@@ -529,11 +487,7 @@ struct CreateSensor {
 }
 
 #[post("/add_sensor", format = "application/json", data = "<data>")]
-fn add_sensor(
-    auth: UserTokenAuth,
-    data: Json<CreateSensor>,
-    conn: SolDbConn,
-) -> echain::Result<Message> {
+fn add_sensor(auth: UserTokenAuth, data: Json<CreateSensor>, conn: SolDbConn) -> Result<Message> {
     let sensor = SensorInsert {
         owner_id: auth.0.id,
         hardware_id: data.hardware_id,
