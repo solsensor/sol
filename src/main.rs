@@ -95,7 +95,8 @@ fn user(email: String, conn: SolDbConn) -> Result<Template> {
 #[get("/sensor/<id>")]
 fn sensor(id: i32, conn: SolDbConn) -> Result<Template> {
     let sensor = Sensor::find(id, &conn)?;
-    let readings = Reading::find_for_sensor(sensor.id, &conn).ok();
+    let readings = Reading::find_for_sensor(sensor.id, &conn)?;
+    let readings = Some(readings.into_iter().take(20).collect());
     let ctx = TemplateCtx {
         title: format!("sensor {}", id),
         users: None,

@@ -19,6 +19,7 @@
 		<div id="chart-temp"></div>
 	  </div>
 	</div>
+	<p class="title">Last 20 Readings</p>
 	<table class="table">
       <thead>
 		<tr>
