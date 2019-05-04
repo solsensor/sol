@@ -1,92 +1,99 @@
-var batterySpec = {
-	$schema: 'https://vega.github.io/schema/vega-lite/v3.json',
-	description: 'Battery voltage over time',
-	data: {
-		values: [
-			{ timestamp: 1542513093, batt_V: 1.2300000190734863 },
-			{ timestamp: 1542513094, batt_V: 1.3300000190734863 },
-			{ timestamp: 1542513095, batt_V: 1.2300000190734863 },
-			{ timestamp: 1542513098, batt_V: 1.4300000190734863 },
-			{ timestamp: 1542513099, batt_V: 1.1300000190734863 },
-		]
+var spec = {
+	"$schema": "https://vega.github.io/schema/vega-lite/v3.json",
+	"description": "Sensor Data",
+	"data": {
+		"url": "/api/sensor/10/readings?start=1548210420&end=1548220420",
+		"format": { "property": "data.readings" }
 	},
-	mark: {
-		type: 'line',
-		point: true,
-	},
-	encoding: {
-		x: {
-			field: 'timestamp',
-			type: 'quantitative',
-			axis: { title: 'timestamp (unix)' },
+	"transform": [
+		{ "calculate": "1000*datum.timestamp", as: "timestampms" }
+	],
+	"vconcat": [
+		{
+			"width": 1000,
+			"mark": {
+				"type": "line",
+				"point": true
+			},
+			"encoding": {
+				"x": {
+					"field": "timestampms",
+					"type": "temporal",
+					"timeUnit": "yearmonthdatehoursminutesseconds",
+					"axis": { "title": "" }
+				},
+				"y": {
+					"field": "peak_current_mA",
+					"type": "quantitative",
+					"axis": { "title": "peak current (mA)" },
+				}
+			}
 		},
-		y: {
-			field: 'batt_V',
-			type: 'quantitative',
-			axis: { title: 'battery (V)' },
+		{
+			"width": 1000,
+			"mark": {
+				"type": "line",
+				"point": true
+			},
+			"encoding": {
+				"x": {
+					"field": "timestampms",
+					"type": "temporal",
+					"timeUnit": "yearmonthdatehoursminutesseconds",
+					"axis": { "title": "" }
+				},
+				"y": {
+					"field": "peak_power_mW",
+					"type": "quantitative",
+					"axis": { "title": "peak power (mW)" },
+				}
+			}
 		},
-	}
-};
-vegaEmbed('#chart-battery', batterySpec);
+		{
+			"width": 1000,
+			"mark": {
+				"type": "line",
+				"point": true
+			},
+			"encoding": {
+				"x": {
+					"field": "timestampms",
+					"type": "temporal",
+					"timeUnit": "yearmonthdatehoursminutesseconds",
+					"axis": { "title": "" }
+				},
+				"y": {
+					"field": "peak_voltage_V",
+					"type": "quantitative",
+					"axis": { "title": "peak voltage (V)" },
+				}
+			}
+		},
+		{
+			"width": 1000,
+			"mark": {
+				"type": "line",
+				"point": true
+			},
+			"encoding": {
+				"x": {
+					"field": "timestampms",
+					"type": "temporal",
+					"timeUnit": "yearmonthdatehoursminutesseconds",
+					"axis": { "title": "" }
+				},
+				"y": {
+					"field": "temp_celsius",
+					"type": "quantitative",
+					"axis": { "title": "temp (C)" },
+				}
+			}
+		}
+	]
+}
 
-var powerSpec = {
-	$schema: 'https://vega.github.io/schema/vega-lite/v3.json',
-	description: 'Battery voltage over time',
-	data: {
-		values: [
-			{ timestamp: 1542513093, batt_V: 1.2300000190734863 },
-			{ timestamp: 1542513094, batt_V: 1.3300000190734863 },
-			{ timestamp: 1542513095, batt_V: 1.2300000190734863 },
-			{ timestamp: 1542513098, batt_V: 1.4300000190734863 },
-			{ timestamp: 1542513099, batt_V: 1.1300000190734863 },
-		]
-	},
-	mark: {
-		type: 'line',
-		point: true,
-	},
-	encoding: {
-		x: {
-			field: 'timestamp',
-			type: 'quantitative',
-			axis: { title: 'timestamp (unix)' },
-		},
-		y: {
-			field: 'batt_V',
-			type: 'quantitative',
-			axis: { title: 'peak power (mW)' },
-		},
-	}
+var embedOpts = {
+	actions: false,
 };
-vegaEmbed('#chart-power', powerSpec);
 
-var tempSpec = {
-	$schema: 'https://vega.github.io/schema/vega-lite/v3.json',
-	description: 'Battery voltage over time',
-	data: {
-		values: [
-			{ timestamp: 1542513093, batt_V: 1.2300000190734863 },
-			{ timestamp: 1542513094, batt_V: 1.3300000190734863 },
-			{ timestamp: 1542513095, batt_V: 1.2300000190734863 },
-			{ timestamp: 1542513098, batt_V: 1.4300000190734863 },
-			{ timestamp: 1542513099, batt_V: 1.1300000190734863 },
-		]
-	},
-	mark: {
-		type: 'line',
-		point: true,
-	},
-	encoding: {
-		x: {
-			field: 'timestamp',
-			type: 'quantitative',
-			axis: { title: 'timestamp (unix)' },
-		},
-		y: {
-			field: 'batt_V',
-			type: 'quantitative',
-			axis: { title: 'temp (C)' },
-		},
-	}
-};
-vegaEmbed('#chart-temp', tempSpec);
+vegaEmbed('#charts', spec, embedOpts);

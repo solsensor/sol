@@ -8,16 +8,9 @@
 	  <p>owner_id: {{sensor.owner_id}}</p>
 	  <p>hardware_id: {{sensor.hardware_id}}</p>
 	</div>
-	<div class="level">
-	  <div class="box">
-		<div id="chart-battery"></div>
-	  </div>
-	  <div class="box">
-		<div id="chart-power"></div>
-	  </div>
-	  <div class="box">
-		<div id="chart-temp"></div>
-	  </div>
+	<p class="title">Charts</p>
+	<div class="box">
+		<div id="charts"></div>
 	</div>
 	<p class="title">Last 20 Readings</p>
 	<table class="table">
