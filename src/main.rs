@@ -129,11 +129,9 @@ fn login_post(
 ) -> Result<Redirect> {
     let creds = creds.into_inner();
     let user = User::verify_password(&creds.email, &creds.password, &conn)?;
-    cookies.add_private(
-        Cookie::build("user_token", "this_is_an_api_key")
-            .path("/")
-            .finish(),
-    );
+    let token = Token::new_user_token(&user);
+    Token::insert(&token, &conn)?;
+    cookies.add_private(Cookie::build("user_token", token.token).path("/").finish());
     Ok(Redirect::to(uri!(user: user.email)))
 }
 
@@ -331,7 +329,7 @@ fn add_readings(
 #[post("/token")]
 fn get_token(auth: BasicAuth, conn: SolDbConn) -> Result<Data> {
     let user = auth.0;
-    let token = Token::new_user_token(user);
+    let token = Token::new_user_token(&user);
     Token::insert(&token, &conn)
         .map(|_count| Data::new("got user token", json!({"token": token.token})))
 }

@@ -200,7 +200,7 @@ impl Token {
             .collect()
     }
 
-    pub fn new_user_token(user: UserQuery) -> TokenInsert {
+    pub fn new_user_token(user: &UserQuery) -> TokenInsert {
         TokenInsert {
             token: format!("user-{}", Self::rand_str()),
             type_: TokenType::User.get_string(),
