@@ -42,7 +42,8 @@ use std::{
 
 #[derive(Serialize)]
 struct TemplateCtx {
-    title: String,
+    title: Option<String>,
+    current_user: Option<UserQuery>,
     users: Option<Vec<UserQuery>>,
     user: Option<UserQuery>,
     sensors: Option<Vec<SensorQuery>>,
@@ -50,74 +51,66 @@ struct TemplateCtx {
     readings: Option<Vec<ReadingQuery>>,
 }
 
+impl<'a, 'r> FromRequest<'a, 'r> for TemplateCtx {
+    type Error = String;
+    fn from_request(req: &'a Request<'r>) -> Outcome<Self, (Status, String), ()> {
+        let user = req
+            .guard()
+            .success_or("failed")
+            .ok()
+            .map(|uc: UserCookieAuth| uc.0);
+        let ctx = TemplateCtx {
+            current_user: user,
+            title: None,
+            user: None,
+            users: None,
+            sensors: None,
+            sensor: None,
+            readings: None,
+        };
+        Outcome::Success(ctx)
+    }
+}
+
 #[get("/")]
-fn index() -> Template {
-    let ctx = TemplateCtx {
-        title: String::from("Home"),
-        users: None,
-        user: None,
-        sensors: None,
-        sensor: None,
-        readings: None,
-    };
-    Template::render("index", &ctx)
+fn index(mut ctx: TemplateCtx) -> Template {
+    ctx.title = Some("Home".into());
+    Template::render("index", ctx)
 }
 
 #[get("/users")]
-fn users(conn: SolDbConn, _user: UserCookieAuth) -> Template {
+fn users(mut ctx: TemplateCtx, conn: SolDbConn, _user: UserCookieAuth) -> Template {
     let users = User::all(&conn).ok();
-    let ctx = TemplateCtx {
-        title: String::from("Users"),
-        user: None,
-        users,
-        sensors: None,
-        sensor: None,
-        readings: None,
-    };
+    ctx.title = Some(String::from("Users"));
+    ctx.users = users;
     Template::render("users", &ctx)
 }
 
 #[get("/user/<email>")]
-fn user(email: String, conn: SolDbConn) -> Result<Template> {
+fn user(mut ctx: TemplateCtx, email: String, conn: SolDbConn) -> Result<Template> {
     let user = User::by_email(&email, &conn)?;
     let sensors = Sensor::find_for_user(user.id, &conn).ok();
-    let ctx = TemplateCtx {
-        title: email,
-        users: None,
-        user: Some(user),
-        sensors,
-        sensor: None,
-        readings: None,
-    };
+
+    ctx.title = Some(email);
+    ctx.user = Some(user);
+    ctx.sensors = sensors;
     Ok(Template::render("user", &ctx))
 }
 
 #[get("/sensor/<id>")]
-fn sensor(id: i32, conn: SolDbConn) -> Result<Template> {
+fn sensor(mut ctx: TemplateCtx, id: i32, conn: SolDbConn) -> Result<Template> {
     let sensor = Sensor::find(id, &conn)?;
     let readings = Reading::find_for_sensor(sensor.id, &conn)?;
     let readings = Some(readings.into_iter().take(20).collect());
-    let ctx = TemplateCtx {
-        title: format!("sensor {}", id),
-        users: None,
-        user: None,
-        sensors: None,
-        sensor: Some(sensor),
-        readings,
-    };
+    ctx.title = Some(format!("sensor {}", id));
+    ctx.sensor = Some(sensor);
+    ctx.readings = readings;
     Ok(Template::render("sensor", &ctx))
 }
 
 #[get("/login")]
-fn login() -> Template {
-    let ctx = TemplateCtx {
-        title: String::from("Login"),
-        user: None,
-        users: None,
-        sensors: None,
-        sensor: None,
-        readings: None,
-    };
+fn login(mut ctx: TemplateCtx) -> Template {
+    ctx.title = Some(String::from("Login"));
     Template::render("login", &ctx)
 }
 
@@ -136,15 +129,8 @@ fn login_post(
 }
 
 #[get("/register")]
-fn register() -> Template {
-    let ctx = TemplateCtx {
-        title: String::from("Register"),
-        user: None,
-        users: None,
-        sensors: None,
-        sensor: None,
-        readings: None,
-    };
+fn register(mut ctx: TemplateCtx) -> Template {
+    ctx.title = Some(String::from("Register"));
     Template::render("register", &ctx)
 }
 
