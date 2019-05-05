@@ -13,6 +13,8 @@ extern crate rocket_contrib;
 extern crate serde_derive;
 #[macro_use]
 extern crate diesel;
+#[macro_use]
+extern crate diesel_migrations;
 
 mod models;
 mod result;
@@ -20,6 +22,8 @@ mod schema;
 #[cfg(test)]
 mod tests;
 
+use diesel::Connection;
+use diesel_migrations::embed_migrations;
 use models::{
     Reading, ReadingInsert, ReadingQuery, Sensor, SensorInsert, SensorQuery, Token, TokenQuery,
     TokenType, User, UserInsert, UserQuery,
@@ -545,6 +549,10 @@ fn rocket() -> Rocket {
         .attach(SolDbConn::fairing())
 }
 
+embed_migrations!("./migrations");
+
 fn main() {
+    let conn = diesel::SqliteConnection::establish("./sol.sqlite").expect("error connecting to db");
+    embedded_migrations::run(&conn).expect("failed to run migrations");
     rocket().launch();
 }
