@@ -1,7 +1,14 @@
 ---
 - hosts: lambda
   become: true
-  gather_facts: no
+
+  roles:
+    - role: fubarhouse.rust
+      tags: [ deploy, install ]
+      vars:
+        rust_update: true
+        rust_version: nightly
+        cargo_items: []
 
   vars:
     letsencrypt_email: letsencrypt@mail.ryanchipman.com
@@ -93,3 +100,41 @@
     - name: Reload nginx to make landing page available
       tags: [ deploy ]
       service: name=nginx state=restarted
+
+    - name: Checkout latest master from solsensor/sol repo
+      tags: [ deploy ]
+      git:
+        dest: /sol
+        repo: https://github.com/solsensor/sol
+        version: master
+
+    - name: Add rustup version override
+      tags: [ deploy ]
+      shell: /root/.cargo/bin/rustup override set nightly
+      args:
+        chdir: /sol
+
+    - name: Install sqlite
+      tags: [ deploy ]
+      apt:
+        name: libsqlite3-dev
+        state: latest
+
+    - name: Build sol binary
+      tags: [ deploy ]
+      shell: /root/.cargo/bin/cargo build
+      args:
+        chdir: /sol
+
+    - name: Create systemd unit file
+      tags: [ deploy ]
+      template:
+        src: templates/sol.service.j2
+        dest: /etc/systemd/system/sol.service
+
+    - name: Restart sol service
+      tags: [ deploy ]
+      systemd:
+        name: sol
+        daemon_reload: true
+        state: restarted
