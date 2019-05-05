@@ -114,6 +114,12 @@ fn login(mut ctx: TemplateCtx) -> Template {
     Template::render("login", &ctx)
 }
 
+#[get("/logout")]
+fn logout(mut cookies: Cookies) -> Redirect {
+    cookies.remove_private(Cookie::named("user_token"));
+    Redirect::to("/")
+}
+
 #[post("/login", data = "<creds>")]
 fn login_post(
     creds: Form<EmailPassword>,
@@ -495,6 +501,7 @@ fn rocket() -> Rocket {
                 register_post,
                 login,
                 login_post,
+                logout,
                 sensor,
             ],
         )
