@@ -48,6 +48,7 @@
 		</div>
 	  </div>
 	</nav>
+	{% if flash %}<p>{{flash}}</p>{% endif %}
 	{% block body %}{% endblock body %}
 	<footer class="footer">
 	  <div class="content has-text-centered">

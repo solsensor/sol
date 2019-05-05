@@ -29,8 +29,8 @@ use rocket::{
     get,
     http::{Cookie, Cookies, Status},
     post,
-    request::{Form, FromRequest},
-    response::{NamedFile, Redirect},
+    request::{FlashMessage, Form, FromRequest},
+    response::{Flash, NamedFile, Redirect},
     routes, Outcome, Request, Rocket,
 };
 use rocket_contrib::{json::Json, templates::Template};
@@ -44,6 +44,7 @@ use std::{
 struct TemplateCtx {
     title: Option<String>,
     current_user: Option<UserQuery>,
+    flash: Option<String>,
     users: Option<Vec<UserQuery>>,
     user: Option<UserQuery>,
     sensors: Option<Vec<SensorQuery>>,
@@ -54,14 +55,20 @@ struct TemplateCtx {
 impl<'a, 'r> FromRequest<'a, 'r> for TemplateCtx {
     type Error = String;
     fn from_request(req: &'a Request<'r>) -> Outcome<Self, (Status, String), ()> {
-        let user = req
+        let current_user = req
             .guard()
             .success_or("failed")
             .ok()
             .map(|uc: UserCookieAuth| uc.0);
+        let flash = req
+            .guard()
+            .success_or("failed")
+            .ok()
+            .map(|f: FlashMessage| format!("{}: {}", f.name(), f.msg()));
         let ctx = TemplateCtx {
-            current_user: user,
+            current_user,
             title: None,
+            flash,
             user: None,
             users: None,
             sensors: None,
@@ -486,6 +493,19 @@ fn add_sensor(auth: UserTokenAuth, data: Json<CreateSensor>, conn: SolDbConn) ->
     Sensor::insert(&sensor, &conn).map(|_| Message::new("successfully added sensor"))
 }
 
+#[get("/flash")]
+fn set_flash() -> Flash<Redirect> {
+    Flash::success(Redirect::to("/"), "this is a flash message!")
+}
+
+#[catch(401)]
+fn not_authorized(req: &Request) -> Flash<Redirect> {
+    Flash::error(
+        Redirect::to("/login"),
+        format!("not authorized to access {}", req.uri().path()),
+    )
+}
+
 #[database("sqlite_sol")]
 struct SolDbConn(diesel::SqliteConnection);
 
@@ -503,6 +523,7 @@ fn rocket() -> Rocket {
                 login_post,
                 logout,
                 sensor,
+                set_flash,
             ],
         )
         .mount(
@@ -519,6 +540,7 @@ fn rocket() -> Rocket {
             ],
         )
         .mount("/static", routes![files])
+        .register(catchers![not_authorized])
         .attach(Template::fairing())
         .attach(SolDbConn::fairing())
 }
