@@ -34,7 +34,7 @@ table! {
     users (id) {
         id -> Integer,
         email -> Text,
-        password -> Text,
+        pwd_hash -> Text,
     }
 }
 

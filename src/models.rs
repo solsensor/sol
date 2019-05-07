@@ -1,5 +1,5 @@
 use super::schema::{readings, sensors, tokens, users};
-use diesel::{insert_into, prelude::*, Insertable, Queryable};
+use diesel::{insert_into, prelude::*, update, Insertable, Queryable};
 use rand::Rng;
 use result::{Error, Result};
 use std::iter;
@@ -79,24 +79,29 @@ impl Reading {
     }
 }
 
-#[derive(Insertable, Serialize, Deserialize, FromForm)]
+#[derive(Insertable, Serialize, Clone)]
 #[table_name = "users"]
 pub struct UserInsert {
     pub id: Option<i32>,
     pub email: String,
-    pub password: String,
+    pub pwd_hash: String,
 }
 
 #[derive(Serialize, Queryable, Debug)]
 pub struct UserQuery {
     pub id: i32,
     pub email: String,
-    pub password: String,
+    pub pwd_hash: String,
 }
 
 pub struct User;
 
 impl User {
+    fn hash_password(pw: String) -> String {
+        let bytes = argon2rs::argon2i_simple(&pw, "salty salt");
+        base64::encode(&bytes)
+    }
+
     pub fn all(conn: &SqliteConnection) -> Result<Vec<UserQuery>> {
         use super::schema::users::dsl::users as all_users;
         all_users.load::<UserQuery>(conn).map_err(|e| e.into())
@@ -131,7 +136,7 @@ impl User {
         conn: &SqliteConnection,
     ) -> Result<UserQuery> {
         Self::by_email(email, conn).and_then(|user| {
-            if &user.password == password {
+            if user.pwd_hash == Self::hash_password(password.to_string()) {
                 Ok(user)
             } else {
                 Err(Error::IncorrectPassword)
@@ -139,8 +144,22 @@ impl User {
         })
     }
 
-    pub fn insert(user: &UserInsert, conn: &SqliteConnection) -> Result<usize> {
+    pub fn update_password(user_id: i32, pwd: String, conn: &SqliteConnection) -> Result<()> {
+        let hash = Self::hash_password(pwd);
+        update(users::table.find(user_id))
+            .set(users::pwd_hash.eq(hash))
+            .execute(conn)
+            .map(|_| ())?;
+        Ok(())
+    }
+
+    pub fn insert(email: String, password: String, conn: &SqliteConnection) -> Result<usize> {
         use super::schema::users::table as users_table;
+        let user = UserInsert {
+            id: None,
+            email,
+            pwd_hash: Self::hash_password(password),
+        };
         insert_into(users_table)
             .values(user)
             .execute(conn)

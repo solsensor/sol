@@ -3,6 +3,7 @@
 #![allow(proc_macro_derive_resolution_fallback)]
 #![feature(proc_macro_hygiene, decl_macro)]
 
+extern crate argon2rs;
 extern crate base64;
 extern crate rand;
 #[macro_use]
@@ -26,7 +27,7 @@ use diesel::Connection;
 use diesel_migrations::embed_migrations;
 use models::{
     Reading, ReadingInsert, ReadingQuery, Sensor, SensorInsert, SensorQuery, Token, TokenQuery,
-    TokenType, User, UserInsert, UserQuery,
+    TokenType, User, UserQuery,
 };
 use result::{Error, Result};
 use rocket::{
@@ -125,6 +126,31 @@ fn login(mut ctx: TemplateCtx) -> Template {
     Template::render("login", &ctx)
 }
 
+#[get("/change_password")]
+fn change_password(mut ctx: TemplateCtx, _user: UserCookieAuth) -> Template {
+    ctx.title = Some(String::from("Change Password"));
+    Template::render("change_password", &ctx)
+}
+
+#[derive(Deserialize, FromForm)]
+struct Password {
+    password: String,
+}
+
+#[post("/change_password", data = "<form>")]
+fn change_password_post(
+    form: Form<Password>,
+    conn: SolDbConn,
+    user: UserCookieAuth,
+    mut cookies: Cookies,
+) -> Result<Redirect> {
+    let user = user.0;
+    let pwd = form.into_inner().password;
+    User::update_password(user.id, pwd, &conn)?;
+    cookies.remove_private(Cookie::named("user_token"));
+    Ok(Redirect::to("/login"))
+}
+
 #[get("/logout")]
 fn logout(mut cookies: Cookies) -> Redirect {
     cookies.remove_private(Cookie::named("user_token"));
@@ -151,10 +177,17 @@ fn register(mut ctx: TemplateCtx) -> Template {
     Template::render("register", &ctx)
 }
 
+#[derive(Deserialize, FromForm)]
+struct Register {
+    email: String,
+    password: String,
+}
+
 #[post("/register", data = "<form>")]
-fn register_post(form: Form<UserInsert>, conn: SolDbConn) -> Result<Redirect> {
-    let user = form.into_inner();
-    User::insert(&user, &conn).map(|_count| Redirect::to(uri!(user: user.email)))
+fn register_post(form: Form<Register>, conn: SolDbConn) -> Result<Redirect> {
+    let form = form.into_inner();
+    User::insert(form.email.clone(), form.password.clone(), &conn)
+        .map(|_count| Redirect::to(uri!(user: form.email)))
 }
 
 #[get("/<path..>")]
@@ -234,8 +267,9 @@ mod res {
 use res::{Data, Message};
 
 #[post("/users/new", format = "application/json", data = "<user>")]
-fn add_user(user: Json<UserInsert>, conn: SolDbConn) -> Result<Message> {
-    User::insert(&user.0, &conn).map(|_| Message::new("successfully created user"))
+fn add_user(user: Json<Register>, conn: SolDbConn) -> Result<Message> {
+    User::insert(user.0.email, user.0.password, &conn)
+        .map(|_| Message::new("successfully created user"))
 }
 
 #[get("/users/all")]
@@ -525,6 +559,8 @@ fn rocket() -> Rocket {
                 register_post,
                 login,
                 login_post,
+                change_password,
+                change_password_post,
                 logout,
                 sensor,
                 set_flash,
