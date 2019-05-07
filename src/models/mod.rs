@@ -52,10 +52,11 @@ impl Reading {
 
     pub fn find_for_sensor(sensor_id: i32, conn: &SqliteConnection) -> Result<Vec<ReadingQuery>> {
         use super::schema::readings::dsl::{
-            readings as all_readings, sensor_id as reading_sensor_id,
+            readings as all_readings, sensor_id as reading_sensor_id, timestamp,
         };
         all_readings
             .filter(reading_sensor_id.eq(sensor_id))
+            .order(timestamp.desc())
             .load(conn)
             .map_err(|e| e.into())
     }
