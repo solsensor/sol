@@ -1,14 +1,16 @@
-use super::schema::{readings, sensors, tokens, users};
+use crate::{
+    result::{Error, Result},
+    schema::{readings, sensors, tokens, users},
+};
+use chrono::NaiveDateTime;
 use diesel::{insert_into, prelude::*, update, Insertable, Queryable};
 use rand::Rng;
-use result::{Error, Result};
 use std::iter;
 
 #[allow(non_snake_case)]
 #[derive(Insertable, Serialize, Deserialize)]
 #[table_name = "readings"]
 pub struct ReadingInsert {
-    pub id: Option<i32>,
     pub sensor_id: i32,
     pub timestamp: i32,
     pub peak_power_mW: f32,
@@ -29,6 +31,7 @@ pub struct ReadingQuery {
     pub peak_voltage_V: f32,
     pub temp_celsius: f32,
     pub batt_V: f32,
+    pub created: NaiveDateTime,
 }
 
 pub struct Reading;

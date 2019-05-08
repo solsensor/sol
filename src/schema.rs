@@ -8,6 +8,7 @@ table! {
         peak_voltage_V -> Float,
         temp_celsius -> Float,
         batt_V -> Float,
+        created -> Timestamp,
     }
 }
 

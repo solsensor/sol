@@ -5,6 +5,7 @@
 
 extern crate argon2rs;
 extern crate base64;
+extern crate chrono;
 extern crate rand;
 #[macro_use]
 extern crate rocket;
@@ -328,7 +329,6 @@ fn add_reading(
     reading: Json<CreateReading>,
 ) -> Result<Message> {
     let reading = ReadingInsert {
-        id: None,
         sensor_id: auth.0.id,
         timestamp: reading.0.timestamp,
         peak_power_mW: reading.0.peak_power_mW,
@@ -350,7 +350,6 @@ fn add_readings(
         .0
         .iter()
         .map(|r| ReadingInsert {
-            id: None,
             sensor_id: auth.0.id,
             timestamp: r.timestamp,
             peak_power_mW: r.peak_power_mW,
