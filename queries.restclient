@@ -90,15 +90,25 @@ Content-Type: application/json
 # Add a reading
 #
 
-:sensor-token = 9gQ7OnkW3ChnjZNvDkSgE5nvnHkcsMcnv64FERyv6oA6FmdrLN4e8BVM8zevZ7f0
-:voltage = 1.234
+:sensor-token = sensor-xGgEUEFn2eI0Pnh7XJxTyOcHmiZmOOapjMnqpJl37FdlNMChjOkO0XSxeyOnaRi3
+:ts = 1548210450
+:pp = 1.234
+:pc = 1.234
+:pv = 1.234
+:tc = 1.234
+:bv = 1.234
 
 POST :root/api/add_reading
 Authorization: bearer :sensor-token
 Content-Type: application/json
 
 {
-  "voltage": :voltage
+  "timestamp": :ts,
+  "peak_power_mW": :pp,
+  "peak_current_mA": :pc,
+  "peak_voltage_V": :pv,
+  "temp_celsius": :tc,
+  "batt_V": :bv
 }
 
 #

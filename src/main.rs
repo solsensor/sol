@@ -24,23 +24,25 @@ mod schema;
 #[cfg(test)]
 mod tests;
 
+use crate::{
+    models::{
+        Reading, ReadingInsert, ReadingQuery, Sensor, SensorInsert, SensorQuery, Token, TokenQuery,
+        TokenType, User, UserQuery,
+    },
+    result::{Error, Result},
+};
+use chrono::NaiveDateTime;
 use diesel::Connection;
 use diesel_migrations::embed_migrations;
-use models::{
-    Reading, ReadingInsert, ReadingQuery, Sensor, SensorInsert, SensorQuery, Token, TokenQuery,
-    TokenType, User, UserQuery,
-};
-use result::{Error, Result};
 use rocket::{
     get,
-    http::{Cookie, Cookies, Status},
+    http::{Cookie, Cookies, RawStr, Status},
     post,
-    request::{FlashMessage, Form, FromRequest},
+    request::{FlashMessage, Form, FromFormValue, FromRequest},
     response::{Flash, NamedFile, Redirect},
     routes, Outcome, Request, Rocket,
 };
 use rocket_contrib::{json::Json, templates::Template};
-
 use std::{
     path::{Path, PathBuf},
     str::from_utf8,
@@ -278,9 +280,35 @@ fn get_users(conn: SolDbConn) -> Result<Data> {
     User::all(&conn).map(|users| Data::new("found all users", json!({ "users": users })))
 }
 
+struct UnixEpochTime(NaiveDateTime);
+
+impl<'v> FromFormValue<'v> for UnixEpochTime {
+    type Error = &'v RawStr;
+    fn from_form_value(form_value: &'v RawStr) -> std::result::Result<Self, Self::Error> {
+        let unix = i64::from_form_value(form_value)?;
+        Ok(UnixEpochTime(NaiveDateTime::from_timestamp(unix, 0)))
+    }
+}
+
+impl<'de> serde::Deserialize<'de> for UnixEpochTime {
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let unix = i64::deserialize(deserializer)?;
+        let datetime = NaiveDateTime::from_timestamp(unix, 0);
+        Ok(UnixEpochTime(datetime))
+    }
+}
+
 #[get("/sensor/<id>/readings?<start>&<end>")]
-fn get_readings(id: i32, start: i32, end: i32, conn: SolDbConn) -> Result<Data> {
-    Reading::find_for_sensor_in_time_range(id, start, end, &conn).map(|readings| {
+fn get_readings(
+    id: i32,
+    start: UnixEpochTime,
+    end: UnixEpochTime,
+    conn: SolDbConn,
+) -> Result<Data> {
+    Reading::find_for_sensor_in_time_range(id, start.0, end.0, &conn).map(|readings| {
         Data::new(
             "found all readings for sensor in range",
             json!({ "readings": readings }),
@@ -312,9 +340,9 @@ fn get_sensor_token(
 }
 
 #[allow(non_snake_case)]
-#[derive(Serialize, Deserialize)]
+#[derive(Deserialize)]
 struct CreateReading {
-    timestamp: i32,
+    timestamp: UnixEpochTime,
     peak_power_mW: f32,
     peak_current_mA: f32,
     peak_voltage_V: f32,
@@ -330,7 +358,7 @@ fn add_reading(
 ) -> Result<Message> {
     let reading = ReadingInsert {
         sensor_id: auth.0.id,
-        timestamp: reading.0.timestamp,
+        timestamp: reading.0.timestamp.0,
         peak_power_mW: reading.0.peak_power_mW,
         peak_current_mA: reading.0.peak_current_mA,
         peak_voltage_V: reading.0.peak_voltage_V,
@@ -351,7 +379,7 @@ fn add_readings(
         .iter()
         .map(|r| ReadingInsert {
             sensor_id: auth.0.id,
-            timestamp: r.timestamp,
+            timestamp: r.timestamp.0,
             peak_power_mW: r.peak_power_mW,
             peak_current_mA: r.peak_current_mA,
             peak_voltage_V: r.peak_voltage_V,

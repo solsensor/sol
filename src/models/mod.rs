@@ -12,7 +12,7 @@ use std::iter;
 #[table_name = "readings"]
 pub struct ReadingInsert {
     pub sensor_id: i32,
-    pub timestamp: i32,
+    pub timestamp: NaiveDateTime,
     pub peak_power_mW: f32,
     pub peak_current_mA: f32,
     pub peak_voltage_V: f32,
@@ -25,7 +25,7 @@ pub struct ReadingInsert {
 pub struct ReadingQuery {
     pub id: i32,
     pub sensor_id: i32,
-    pub timestamp: i32,
+    pub timestamp: NaiveDateTime,
     pub peak_power_mW: f32,
     pub peak_current_mA: f32,
     pub peak_voltage_V: f32,
@@ -66,8 +66,8 @@ impl Reading {
 
     pub fn find_for_sensor_in_time_range(
         sensor_id: i32,
-        start: i32,
-        end: i32,
+        start: NaiveDateTime,
+        end: NaiveDateTime,
         conn: &SqliteConnection,
     ) -> Result<Vec<ReadingQuery>> {
         use super::schema::readings::dsl::{
