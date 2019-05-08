@@ -13,9 +13,6 @@ var spec = {
 		"url": url,
 		"format": { "property": "data.readings" }
 	},
-	"transform": [
-		{ "calculate": "1000*datum.timestamp", as: "timestampms" }
-	],
 	"vconcat": [
 		{
 			"width": 1000,
@@ -25,7 +22,7 @@ var spec = {
 			},
 			"encoding": {
 				"x": {
-					"field": "timestampms",
+					"field": "timestamp",
 					"type": "temporal",
 					"timeUnit": "yearmonthdatehoursminutesseconds",
 					"axis": { "title": "" }
@@ -45,7 +42,7 @@ var spec = {
 			},
 			"encoding": {
 				"x": {
-					"field": "timestampms",
+					"field": "timestamp",
 					"type": "temporal",
 					"timeUnit": "yearmonthdatehoursminutesseconds",
 					"axis": { "title": "" }
@@ -65,7 +62,7 @@ var spec = {
 			},
 			"encoding": {
 				"x": {
-					"field": "timestampms",
+					"field": "timestamp",
 					"type": "temporal",
 					"timeUnit": "yearmonthdatehoursminutesseconds",
 					"axis": { "title": "" }
@@ -85,7 +82,7 @@ var spec = {
 			},
 			"encoding": {
 				"x": {
-					"field": "timestampms",
+					"field": "timestamp",
 					"type": "temporal",
 					"timeUnit": "yearmonthdatehoursminutesseconds",
 					"axis": { "title": "" }
