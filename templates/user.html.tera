@@ -12,16 +12,11 @@
 <section class="section">
   <div class="container">
 	<p class="title">Sensors</p>
-	<div class="tile is-ancestor">
-      <div class="tile is-parent">
-		{% for sensor in sensors %}
-        <article class="tile is-child notification is-primary is-3">
-		  <p class="title">Sensor {{sensor.id}}</p>
-		  <a class="subtitle" href="/sensor/{{sensor.id}}">Click to view</a>
-		</article>
-		{% endfor %}
-      </div>
-	</div>
+	<ul>
+	  {% for sensor in sensors %}
+	  <li><a href="/sensor/{{sensor.id}}">Sensor {{sensor.id}}</a></li>
+	  {% endfor %}
+	</ul>
   </div>
 </section>
 {% endblock body %}
