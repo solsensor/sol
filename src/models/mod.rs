@@ -83,7 +83,6 @@ impl Reading {
 #[derive(Insertable, Serialize, Clone)]
 #[table_name = "users"]
 pub struct UserInsert {
-    pub id: Option<i32>,
     pub email: String,
     pub pwd_hash: String,
 }
@@ -93,6 +92,7 @@ pub struct UserQuery {
     pub id: i32,
     pub email: String,
     pub pwd_hash: String,
+    pub superuser: bool,
 }
 
 pub struct User;
@@ -157,7 +157,6 @@ impl User {
     pub fn insert(email: String, password: String, conn: &SqliteConnection) -> Result<usize> {
         use super::schema::users::table as users_table;
         let user = UserInsert {
-            id: None,
             email,
             pwd_hash: Self::hash_password(password),
         };

@@ -35,6 +35,7 @@ table! {
         id -> Integer,
         email -> Text,
         pwd_hash -> Text,
+        superuser -> Bool,
     }
 }
 
