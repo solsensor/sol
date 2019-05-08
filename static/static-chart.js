@@ -1,8 +1,16 @@
+var startTime = moment().subtract(10, 'days').format('X');
+var endTime = moment().format('X');
+
+var a = document.createElement('a');
+a.href = window.location.href;
+
+var url = '/api' + a.pathname + '/readings?start=' + startTime + '&end=' + endTime;
+
 var spec = {
 	"$schema": "https://vega.github.io/schema/vega-lite/v3.json",
 	"description": "Sensor Data",
 	"data": {
-		"url": "/api/sensor/10/readings?start=1548210420&end=1548220420",
+		"url": url,
 		"format": { "property": "data.readings" }
 	},
 	"transform": [
