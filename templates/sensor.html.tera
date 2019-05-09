@@ -2,7 +2,8 @@
 {% block body %}
 <section class="section">
   <div class="container">
-	<p class="title">Sensor {{sensor.id}}</p>
+	<p class="title">{% if sensor.name %}{{sensor.name}}{% else %}Sensor {{sensor.id}}{% endif %}</p>
+	{% if sensor.description %}<p class="subtitle">{{sensor.description}}</p>{% endif %}
 	<div class="box">
 	  <p>id: {{sensor.id}}</p>
 	  <p>owner_id: {{sensor.owner_id}}</p>
