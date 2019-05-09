@@ -2,17 +2,13 @@
 - hosts: lambda
   become: true
 
-  roles:
-    - role: fubarhouse.rust
-      tags: [ deploy, install ]
-      vars:
-        rust_update: true
-        rust_version: nightly
-        cargo_items: []
-
   vars:
+    ansible_python_interpreter: python3
     letsencrypt_email: letsencrypt@mail.ryanchipman.com
     domain_name: dev.solsensor.com
+
+  vars_files:
+    - vars/creds-encrypted.yml
 
   pre_tasks:
     - raw: apt-get install -y python-simplejson
@@ -83,24 +79,6 @@
         special_time: weekly
         job: letsencrypt --renew certonly -n --webroot -w /var/www/letsencrypt -m {{ letsencrypt_email }} --agree-tos -d {{ domain_name }} && service nginx reload
 
-    - name: Ensure landing page dir exists
-      tags: [ deploy ]
-      file:
-        path: /var/www/{{ domain_name }}
-        state: directory
-
-    - name: Copy landing page to server
-      tags: [ deploy ]
-      copy:
-        src: '{{ item }}'
-        dest: /var/www/{{ domain_name }}/
-      with_fileglob:
-        - ../landing/*
-
-    - name: Reload nginx to make landing page available
-      tags: [ deploy ]
-      service: name=nginx state=restarted
-
     - name: Checkout latest master from solsensor/sol repo
       tags: [ deploy ]
       git:
@@ -108,23 +86,33 @@
         repo: https://github.com/solsensor/sol
         version: master
 
-    - name: Add rustup version override
-      tags: [ deploy ]
-      shell: /root/.cargo/bin/rustup override set nightly
-      args:
-        chdir: /sol
-
-    - name: Install sqlite
-      tags: [ deploy ]
+    - name: Ensure pip3 installed
+      tags: [ install ]
       apt:
-        name: libsqlite3-dev
+        name: python3-pip
         state: latest
 
-    - name: Build sol binary
+    - name: Ensure botocore and boto3 are installed
+      tags: [ install ]
+      pip:
+        name: [ boto3, botocore ]
+        extra_args: --user
+
+    - name: Download latest binary
       tags: [ deploy ]
-      shell: /root/.cargo/bin/cargo build
-      args:
-        chdir: /sol
+      aws_s3:
+        aws_access_key: '{{ aws_access_key }}'
+        aws_secret_key: '{{ aws_secret_key }}'
+        bucket: solsensor-ci
+        object: /artifacts/master/target/debug/sol
+        dest: /sol/sol
+        mode: get
+
+    - name: Ensure binary executable
+      tags: [ deploy ]
+      file:
+        path: /sol/sol
+        mode: 777
 
     - name: Create systemd unit file
       tags: [ deploy ]

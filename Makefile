@@ -9,4 +9,4 @@ provision:
 	ansible-playbook ansible/playbook.yml --tags provision
 
 deploy:
-	ansible-playbook ansible/playbook.yml --tags deploy
+	ansible-playbook --vault-password-file ansible/password.txt ansible/playbook.yml --tags deploy

@@ -4,7 +4,7 @@ Requires=network.target
 After=syslog.target network.target
 [Service]
 WorkingDirectory=/sol
-ExecStart=/sol/target/debug/sol
+ExecStart=/sol/sol
 ExecStop=/usr/bin/pkill sol
 [Install]
 WantedBy=multi-user.target
