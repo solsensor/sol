@@ -7,5 +7,6 @@ addons:
     debug: true
     paths:
       - target/debug/sol
+      - Rocket.toml
     target_paths:
       - artifacts/$TRAVIS_BRANCH
