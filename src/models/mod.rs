@@ -270,6 +270,8 @@ pub struct SensorQuery {
     pub owner_id: i32,
     pub hardware_id: i64,
     pub active: bool,
+    pub name: Option<String>,
+    pub description: Option<String>,
 }
 
 pub struct Sensor;

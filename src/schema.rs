@@ -18,6 +18,8 @@ table! {
         owner_id -> Integer,
         hardware_id -> BigInt,
         active -> Bool,
+        name -> Nullable<Text>,
+        description -> Nullable<Text>,
     }
 }
 
