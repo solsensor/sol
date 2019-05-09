@@ -79,6 +79,13 @@
         special_time: weekly
         job: letsencrypt --renew certonly -n --webroot -w /var/www/letsencrypt -m {{ letsencrypt_email }} --agree-tos -d {{ domain_name }} && service nginx reload
 
+    - name: Checkout latest master from solsensor/sol repo
+      tags: [ deploy ]
+      git:
+        dest: /sol
+        repo: https://github.com/solsensor/sol
+        version: master
+
     - name: Ensure pip3 installed
       tags: [ install ]
       apt:
@@ -91,17 +98,7 @@
         name: [ boto3, botocore ]
         extra_args: --user
 
-    - name: Download Rocket.toml
-      tags: [ deploy ]
-      aws_s3:
-        aws_access_key: '{{ aws_access_key }}'
-        aws_secret_key: '{{ aws_secret_key }}'
-        bucket: solsensor-ci
-        object: /artifacts/master/Rocket.toml
-        dest: /sol/Rocket.toml
-        mode: get
-
-    - name: Download sol binary
+    - name: Download latest binary
       tags: [ deploy ]
       aws_s3:
         aws_access_key: '{{ aws_access_key }}'
