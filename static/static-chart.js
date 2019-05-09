@@ -93,6 +93,26 @@ var spec = {
 					"axis": { "title": "temp (C)" },
 				}
 			}
+		},
+		{
+			"width": 1000,
+			"mark": {
+				"type": "line",
+				"point": true
+			},
+			"encoding": {
+				"x": {
+					"field": "timestamp",
+					"type": "temporal",
+					"timeUnit": "yearmonthdatehoursminutesseconds",
+					"axis": { "title": "" }
+				},
+				"y": {
+					"field": "batt_V",
+					"type": "quantitative",
+					"axis": { "title": "battery (V)" },
+				}
+			}
 		}
 	]
 }
