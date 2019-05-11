@@ -112,6 +112,48 @@ fn user(mut ctx: TemplateCtx, email: String, conn: SolDbConn) -> Result<Template
     Ok(Template::render("user", &ctx))
 }
 
+#[get("/user/<email>/edit")]
+fn user_edit(
+    mut ctx: TemplateCtx,
+    email: String,
+    conn: SolDbConn,
+    _auth: UserCookieAuth,
+) -> Result<Template> {
+    let user = User::by_email(&email, &conn)?;
+    ctx.title = Some(format!("{} | edit", email));
+    ctx.user = Some(user);
+    Ok(Template::render("user_edit", &ctx))
+}
+
+#[derive(Deserialize, FromForm)]
+struct UserEdit {
+    email: String,
+}
+
+#[post("/user/<email>/edit", data = "<form>")]
+fn user_edit_post(
+    auth: UserCookieAuth,
+    form: Form<UserEdit>,
+    email: String,
+    conn: SolDbConn,
+) -> Result<Flash<Redirect>> {
+    let user = User::by_email(&email, &conn)?;
+    if user.id != auth.0.id {
+        return Ok(Flash::error(
+            Redirect::to(uri!(user: email)),
+            "not logged in as this user",
+        ));
+    }
+
+    let form = form.0;
+    User::update(user.id, &form.email, &conn)?;
+
+    Ok(Flash::success(
+        Redirect::to(uri!(user: &form.email)),
+        "successfully updated user",
+    ))
+}
+
 #[get("/sensor/<id>")]
 fn sensor(mut ctx: TemplateCtx, id: i32, conn: SolDbConn) -> Result<Template> {
     let sensor = Sensor::find(id, &conn)?;
@@ -160,10 +202,10 @@ fn sensor_edit_post(
     let form = form.0;
     Sensor::update(id, form.name, form.description, &conn)?;
 
-    return Ok(Flash::success(
+    Ok(Flash::success(
         Redirect::to(uri!(sensor: id)),
         "successfully updated sensor",
-    ));
+    ))
 }
 
 #[get("/login")]
@@ -625,6 +667,8 @@ fn rocket() -> Rocket {
                 index,
                 users,
                 user,
+                user_edit,
+                user_edit_post,
                 register,
                 register_post,
                 login,

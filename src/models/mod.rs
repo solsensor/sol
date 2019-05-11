@@ -148,6 +148,14 @@ impl User {
         })
     }
 
+    pub fn update(id: i32, email: &str, conn: &SqliteConnection) -> Result<()> {
+        update(users::table.find(id))
+            .set(users::email.eq(email))
+            .execute(conn)
+            .map(|_| ())?;
+        Ok(())
+    }
+
     pub fn update_password(user_id: i32, pwd: String, conn: &SqliteConnection) -> Result<()> {
         let hash = Self::hash_password(pwd);
         update(users::table.find(user_id))

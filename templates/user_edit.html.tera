@@ -1,0 +1,27 @@
+{% extends "base" %}
+{% block body %}
+<section class="section">
+  <div class="container">
+
+	<p class="title">Edit User {{user.email}}</p>
+
+	<div class="box">
+	  <form method="post">
+	  <div class="field">
+		<label class="label">Email</label>
+		<div class="control">
+		  <input class="input" type="email" name="email" placeholder="email" value="{{user.email}}">
+		</div>
+	  </div>
+
+	  <div class="field">
+		<div class="control">
+		  <input class="button is-primary has-text-weight-bold" type="submit" value="update">
+		</div>
+	  </div>
+	  </form>
+	</div>
+
+  </div>
+</section>
+{% endblock body %}
