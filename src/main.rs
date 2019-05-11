@@ -7,6 +7,9 @@ extern crate argon2rs;
 extern crate base64;
 extern crate chrono;
 extern crate rand;
+extern crate rocket_slog;
+extern crate slog;
+extern crate sloggers;
 #[macro_use]
 extern crate rocket;
 #[macro_use]
@@ -32,11 +35,21 @@ mod web;
 
 use crate::db::SolDbConn;
 use rocket::{
+    fairing::Fairing,
+    get,
     response::{Flash, NamedFile, Redirect},
-    Request, Rocket,
+    routes, Request, Rocket,
 };
-use rocket_contrib::templates::Template;
-use std::path::{Path, PathBuf};
+use rocket_contrib::{templates::Template};
+use rocket_slog::{SlogFairing};
+use sloggers::{
+    terminal::{Destination, TerminalLoggerBuilder},
+    types::Severity,
+    Build,
+};
+use std::{
+    path::{Path, PathBuf},
+};
 
 #[get("/<path..>")]
 fn files(path: PathBuf) -> Option<NamedFile> {
@@ -56,7 +69,7 @@ fn not_authorized(req: &Request) -> Flash<Redirect> {
     )
 }
 
-fn rocket() -> Rocket {
+fn rocket(slog_fairing: impl Fairing) -> Rocket {
     rocket::ignite()
         .mount(
             "/",
@@ -97,9 +110,19 @@ fn rocket() -> Rocket {
         .register(catchers![not_authorized])
         .attach(Template::fairing())
         .attach(SolDbConn::fairing())
+        .attach(slog_fairing)
 }
 
-fn main() {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     db::run_migrations();
-    rocket().launch();
+
+    let mut builder = TerminalLoggerBuilder::new();
+    builder.level(Severity::Debug);
+    builder.destination(Destination::Stderr);
+    let logger = builder.build()?;
+    let slog_fairing = SlogFairing::new(logger);
+
+    rocket(slog_fairing).launch();
+
+    Ok(())
 }
