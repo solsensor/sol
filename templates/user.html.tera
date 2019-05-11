@@ -6,7 +6,7 @@
 	<div class="box">
 	  <p>id: {{user.id}}</p>
 	  <p>email: {{user.email}}</p>
-	  <a href="/user/{{user.email}}/edit">Edit User</a>
+	  {% if current_user and current_user.id == user.id %}<a href="/user/{{user.email}}/edit">Edit User</a>{% endif %}
 	</div>
   </div>
 </section>
