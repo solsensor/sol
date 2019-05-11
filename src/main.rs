@@ -123,6 +123,27 @@ fn sensor(mut ctx: TemplateCtx, id: i32, conn: SolDbConn) -> Result<Template> {
     Ok(Template::render("sensor", &ctx))
 }
 
+#[get("/sensor/<id>/edit")]
+fn sensor_edit(mut ctx: TemplateCtx, id: i32, conn: SolDbConn) -> Result<Template> {
+    let sensor = Sensor::find(id, &conn)?;
+    ctx.title = Some(format!("sensor {} | edit", id));
+    ctx.sensor = Some(sensor);
+    Ok(Template::render("sensor_edit", &ctx))
+}
+
+#[derive(Deserialize, FromForm)]
+struct SensorEdit {
+    name: String,
+    description: String,
+}
+
+#[post("/sensor/<id>/edit", data = "<form>")]
+fn sensor_edit_post(form: Form<SensorEdit>, id: i32, conn: SolDbConn) -> Result<Redirect> {
+    let form = form.0;
+    Sensor::update(id, form.name, form.description, &conn)?;
+    Ok(Redirect::to(uri!(sensor: id)))
+}
+
 #[get("/login")]
 fn login(mut ctx: TemplateCtx) -> Template {
     ctx.title = Some(String::from("Login"));
@@ -590,6 +611,8 @@ fn rocket() -> Rocket {
                 change_password_post,
                 logout,
                 sensor,
+                sensor_edit,
+                sensor_edit_post,
                 set_flash,
             ],
         )

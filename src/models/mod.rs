@@ -288,6 +288,19 @@ impl Sensor {
             .map_err(|e| e.into())
     }
 
+    pub fn update(
+        id: i32,
+        name: String,
+        description: String,
+        conn: &SqliteConnection,
+    ) -> Result<()> {
+        update(sensors::table.find(id))
+            .set((sensors::name.eq(name), sensors::description.eq(description)))
+            .execute(conn)
+            .map(|_| ())?;
+        Ok(())
+    }
+
     pub fn find_by_hardware_id(hardware_id: i64, conn: &SqliteConnection) -> Result<SensorQuery> {
         use super::schema::sensors::dsl::{
             active as sensor_active, hardware_id as sensor_hardware_id, sensors as all_sensors,
