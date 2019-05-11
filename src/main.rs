@@ -7,6 +7,10 @@ extern crate argon2rs;
 extern crate base64;
 extern crate chrono;
 extern crate rand;
+extern crate rocket_slog;
+#[macro_use]
+extern crate slog;
+extern crate sloggers;
 #[macro_use]
 extern crate rocket;
 #[macro_use]
@@ -35,6 +39,7 @@ use chrono::NaiveDateTime;
 use diesel::Connection;
 use diesel_migrations::embed_migrations;
 use rocket::{
+    fairing::Fairing,
     get,
     http::{Cookie, Cookies, RawStr, Status},
     post,
@@ -43,6 +48,12 @@ use rocket::{
     routes, Outcome, Request, Rocket,
 };
 use rocket_contrib::{json::Json, templates::Template};
+use rocket_slog::{SlogFairing, SyncLogger};
+use sloggers::{
+    terminal::{Destination, TerminalLoggerBuilder},
+    types::Severity,
+    Build,
+};
 use std::{
     path::{Path, PathBuf},
     str::from_utf8,
@@ -659,7 +670,9 @@ fn not_authorized(req: &Request) -> Flash<Redirect> {
 #[database("sqlite_sol")]
 struct SolDbConn(diesel::SqliteConnection);
 
-fn rocket() -> Rocket {
+fn build_slogger() {}
+
+fn rocket(slog_fairing: impl Fairing) -> Rocket {
     rocket::ignite()
         .mount(
             "/",
@@ -699,12 +712,22 @@ fn rocket() -> Rocket {
         .register(catchers![not_authorized])
         .attach(Template::fairing())
         .attach(SolDbConn::fairing())
+        .attach(slog_fairing)
 }
 
 embed_migrations!("./migrations");
 
-fn main() {
+fn main() -> std::result::Result<(), Box<std::error::Error>> {
     let conn = diesel::SqliteConnection::establish("./sol.sqlite").expect("error connecting to db");
     embedded_migrations::run(&conn).expect("failed to run migrations");
-    rocket().launch();
+
+    let mut builder = TerminalLoggerBuilder::new();
+    builder.level(Severity::Debug);
+    builder.destination(Destination::Stderr);
+    let logger = builder.build()?;
+    let slog_fairing = SlogFairing::new(logger);
+
+    rocket(slog_fairing).launch();
+
+    Ok(())
 }
