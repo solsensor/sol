@@ -1,5 +1,3 @@
-[global]
-log = "off"
 
 [global.databases]
 sqlite_sol = { url = "sol.sqlite" }
