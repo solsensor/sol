@@ -124,7 +124,12 @@ fn sensor(mut ctx: TemplateCtx, id: i32, conn: SolDbConn) -> Result<Template> {
 }
 
 #[get("/sensor/<id>/edit")]
-fn sensor_edit(mut ctx: TemplateCtx, id: i32, conn: SolDbConn) -> Result<Template> {
+fn sensor_edit(
+    mut ctx: TemplateCtx,
+    id: i32,
+    conn: SolDbConn,
+    _auth: UserCookieAuth,
+) -> Result<Template> {
     let sensor = Sensor::find(id, &conn)?;
     ctx.title = Some(format!("sensor {} | edit", id));
     ctx.sensor = Some(sensor);
@@ -138,10 +143,27 @@ struct SensorEdit {
 }
 
 #[post("/sensor/<id>/edit", data = "<form>")]
-fn sensor_edit_post(form: Form<SensorEdit>, id: i32, conn: SolDbConn) -> Result<Redirect> {
+fn sensor_edit_post(
+    auth: UserCookieAuth,
+    form: Form<SensorEdit>,
+    id: i32,
+    conn: SolDbConn,
+) -> Result<Flash<Redirect>> {
+    let sensor = Sensor::find(id, &conn)?;
+    if sensor.owner_id != auth.0.id {
+        return Ok(Flash::error(
+            Redirect::to(uri!(sensor: id)),
+            "user does not own this sensor",
+        ));
+    }
+
     let form = form.0;
     Sensor::update(id, form.name, form.description, &conn)?;
-    Ok(Redirect::to(uri!(sensor: id)))
+
+    return Ok(Flash::success(
+        Redirect::to(uri!(sensor: id)),
+        "successfully updated sensor",
+    ));
 }
 
 #[get("/login")]
