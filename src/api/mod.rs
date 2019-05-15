@@ -11,6 +11,9 @@ use rocket_contrib::json::Json;
 mod res;
 use self::res::{Data, Message};
 
+mod result;
+use self::result::Result as ApiResult;
+
 #[derive(Deserialize)]
 pub struct Register {
     email: String,
@@ -157,10 +160,11 @@ pub fn add_sensor(
     auth: auth::UserToken,
     data: Json<CreateSensor>,
     conn: SolDbConn,
-) -> Result<Message> {
+) -> ApiResult<Message> {
     let sensor = SensorInsert {
         owner_id: auth.user().id,
         hardware_id: data.hardware_id,
     };
-    Sensor::insert(&sensor, &conn).map(|_| Message::new("successfully added sensor"))
+    Sensor::insert(&sensor, &conn)?;
+    Ok(Message::new("successfully added sensor"))
 }
