@@ -1,13 +1,12 @@
 use crate::result::Error as BaseError;
 use rocket::{
-    http::{ContentType, Status},
+    http::Status,
     request::Request,
-    response::{Responder, Response},
+    response::{Flash, Redirect, Responder, Response},
 };
 use std::{
     convert::{From, Into},
     fmt,
-    io::Cursor,
 };
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -28,20 +27,8 @@ impl<E: Into<BaseError>> From<E> for Error {
 }
 
 impl<'r> Responder<'r> for Error {
-    fn respond_to(self, _: &Request) -> ::std::result::Result<Response<'r>, Status> {
-        // Create JSON response
-        let resp = json!({
-            "status": "failure",
-            "message": self.to_string(),
-        })
-        .to_string();
-
-        // Respond. The `Ok` here is a bit of a misnomer. It means we
-        // successfully created an error response
-        Ok(Response::build()
-            .status(Status::BadRequest)
-            .header(ContentType::JSON)
-            .sized_body(Cursor::new(resp))
-            .finalize())
+    fn respond_to(self, req: &Request) -> ::std::result::Result<Response<'r>, Status> {
+        let res: Flash<Redirect> = Flash::error(Redirect::to("/"), self.to_string());
+        res.respond_to(req)
     }
 }
