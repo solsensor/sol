@@ -2,7 +2,6 @@ use crate::{
     auth,
     db::SolDbConn,
     models::{Reading, ReadingQuery, Sensor, SensorQuery, Token, User, UserQuery},
-    result::Result,
 };
 use rocket::{
     get,
@@ -13,6 +12,9 @@ use rocket::{
     Outcome, Request,
 };
 use rocket_contrib::templates::Template;
+
+mod result;
+use self::result::Result as WebResult;
 
 #[derive(Serialize)]
 pub struct TemplateCtx {
@@ -68,7 +70,7 @@ pub fn users(mut ctx: TemplateCtx, conn: SolDbConn, _user: auth::UserCookie) -> 
 }
 
 #[get("/user/<email>")]
-pub fn user(mut ctx: TemplateCtx, email: String, conn: SolDbConn) -> Result<Template> {
+pub fn user(mut ctx: TemplateCtx, email: String, conn: SolDbConn) -> WebResult<Template> {
     let user = User::by_email(&email, &conn)?;
     let sensors = Sensor::find_for_user(user.id, &conn).ok();
 
@@ -84,7 +86,7 @@ pub fn user_edit(
     email: String,
     conn: SolDbConn,
     _auth: auth::UserCookie,
-) -> Result<Template> {
+) -> WebResult<Template> {
     let user = User::by_email(&email, &conn)?;
     ctx.title = Some(format!("{} | edit", email));
     ctx.user = Some(user);
@@ -102,7 +104,7 @@ pub fn user_edit_post(
     form: Form<UserEdit>,
     email: String,
     conn: SolDbConn,
-) -> Result<Flash<Redirect>> {
+) -> WebResult<Flash<Redirect>> {
     let user = User::by_email(&email, &conn)?;
     if user.id != auth.user().id {
         return Ok(Flash::error(
@@ -121,7 +123,7 @@ pub fn user_edit_post(
 }
 
 #[get("/sensor/<id>")]
-pub fn sensor(mut ctx: TemplateCtx, id: i32, conn: SolDbConn) -> Result<Template> {
+pub fn sensor(mut ctx: TemplateCtx, id: i32, conn: SolDbConn) -> WebResult<Template> {
     let sensor = Sensor::find(id, &conn)?;
     let readings = Reading::find_for_sensor(sensor.id, &conn)?;
     let readings = Some(readings.into_iter().take(20).collect());
@@ -137,7 +139,7 @@ pub fn sensor_edit(
     id: i32,
     conn: SolDbConn,
     _auth: auth::UserCookie,
-) -> Result<Template> {
+) -> WebResult<Template> {
     let sensor = Sensor::find(id, &conn)?;
     ctx.title = Some(format!("sensor {} | edit", id));
     ctx.sensor = Some(sensor);
@@ -156,7 +158,7 @@ pub fn sensor_edit_post(
     form: Form<SensorEdit>,
     id: i32,
     conn: SolDbConn,
-) -> Result<Flash<Redirect>> {
+) -> WebResult<Flash<Redirect>> {
     let sensor = Sensor::find(id, &conn)?;
     if sensor.owner_id != auth.user().id {
         return Ok(Flash::error(
@@ -197,7 +199,7 @@ pub fn change_password_post(
     conn: SolDbConn,
     auth: auth::UserCookie,
     mut cookies: Cookies,
-) -> Result<Redirect> {
+) -> WebResult<Redirect> {
     let user = auth.user();
     let pwd = form.into_inner().password;
     User::update_password(user.id, pwd, &conn)?;
@@ -222,7 +224,7 @@ pub fn login_post(
     creds: Form<EmailPassword>,
     conn: SolDbConn,
     mut cookies: Cookies,
-) -> Result<Redirect> {
+) -> WebResult<Redirect> {
     let creds = creds.into_inner();
     let user = User::verify_password(&creds.email, &creds.password, &conn)?;
     let token = Token::new_user_token(&user);
@@ -244,8 +246,8 @@ pub struct Register {
 }
 
 #[post("/register", data = "<form>")]
-pub fn register_post(form: Form<Register>, conn: SolDbConn) -> Result<Redirect> {
+pub fn register_post(form: Form<Register>, conn: SolDbConn) -> WebResult<Redirect> {
     let form = form.into_inner();
-    User::insert(form.email.clone(), form.password.clone(), &conn)
-        .map(|_count| Redirect::to(uri!(user: form.email)))
+    User::insert(form.email.clone(), form.password.clone(), &conn)?;
+    Ok(Redirect::to(uri!(user: form.email)))
 }
