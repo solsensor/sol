@@ -15,7 +15,7 @@
 	<p class="title">Sensors</p>
 	<ul>
 	  {% for sensor in sensors %}
-	  <li><a href="/sensor/{{sensor.id}}">Sensor {{sensor.id}}</a></li>
+	  <li><a href="/sensor/{{sensor.id}}">{% if sensor.name %}{{ sensor.name }}{% else %}Sensor {{sensor.id}}{% endif %}</a></li>
 	  {% endfor %}
 	</ul>
   </div>
