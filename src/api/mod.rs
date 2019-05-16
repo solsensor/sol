@@ -2,7 +2,7 @@ use crate::{
     auth,
     db::SolDbConn,
     models::{Reading, ReadingInsert, Sensor, SensorInsert, Token, User},
-    result::{Error, Result},
+    result::Error,
 };
 use chrono::NaiveDateTime;
 use rocket::{get, http::RawStr, post, request::FromFormValue};
@@ -21,14 +21,16 @@ pub struct Register {
 }
 
 #[post("/users/new", format = "application/json", data = "<user>")]
-pub fn add_user(user: Json<Register>, conn: SolDbConn) -> Result<Message> {
-    User::insert(user.0.email, user.0.password, &conn)
-        .map(|_| Message::new("successfully created user"))
+pub fn add_user(user: Json<Register>, conn: SolDbConn) -> ApiResult<Message> {
+    User::insert(user.0.email, user.0.password, &conn)?;
+    Ok(Message::new("successfully created user"))
 }
 
 #[get("/users/all")]
-pub fn get_users(conn: SolDbConn) -> Result<Data> {
-    User::all(&conn).map(|users| Data::new("found all users", json!({ "users": users })))
+pub fn get_users(conn: SolDbConn) -> ApiResult<Data> {
+    let res =
+        User::all(&conn).map(|users| Data::new("found all users", json!({ "users": users })))?;
+    Ok(res)
 }
 
 pub struct UnixEpochTime(NaiveDateTime);
@@ -58,13 +60,15 @@ pub fn get_readings(
     start: UnixEpochTime,
     end: UnixEpochTime,
     conn: SolDbConn,
-) -> Result<Data> {
-    Reading::find_for_sensor_in_time_range(id, start.0, end.0, &conn).map(|readings| {
-        Data::new(
-            "found all readings for sensor in range",
-            json!({ "readings": readings }),
-        )
-    })
+) -> ApiResult<Data> {
+    let res =
+        Reading::find_for_sensor_in_time_range(id, start.0, end.0, &conn).map(|readings| {
+            Data::new(
+                "found all readings for sensor in range",
+                json!({ "readings": readings }),
+            )
+        })?;
+    Ok(res)
 }
 
 #[derive(Deserialize)]
@@ -77,16 +81,17 @@ pub fn get_sensor_token(
     auth: auth::UserToken,
     conn: SolDbConn,
     sensor_hw_id: Json<SensorHardwareId>,
-) -> Result<Data> {
+) -> ApiResult<Data> {
     let user = auth.user();
     let hardware_id = sensor_hw_id.0.hardware_id;
     let sensor = Sensor::find_by_hardware_id(hardware_id, &conn)?;
     if user.id == sensor.owner_id {
         let token = Token::new_sensor_token(sensor);
-        Token::insert(&token, &conn)
-            .map(|_count| Data::new("got sensor token", json!({"token": token.token})))
+        let res = Token::insert(&token, &conn)
+            .map(|_count| Data::new("got sensor token", json!({"token": token.token})))?;
+        Ok(res)
     } else {
-        Err(Error::NotSensorOwner)
+        Err(Error::NotSensorOwner.into())
     }
 }
 
@@ -106,7 +111,7 @@ pub fn add_reading(
     auth: auth::SensorToken,
     conn: SolDbConn,
     reading: Json<CreateReading>,
-) -> Result<Message> {
+) -> ApiResult<Message> {
     let reading = ReadingInsert {
         sensor_id: auth.sensor().id,
         timestamp: reading.0.timestamp.0,
@@ -116,7 +121,9 @@ pub fn add_reading(
         temp_celsius: reading.0.temp_celsius,
         batt_V: reading.0.batt_V,
     };
-    Reading::insert(&reading, &conn).map(|_| Message::new("successfully added reading"))
+    let res =
+        Reading::insert(&reading, &conn).map(|_| Message::new("successfully added reading"))?;
+    Ok(res)
 }
 
 #[post("/add_readings", format = "application/json", data = "<readings>")]
@@ -124,7 +131,7 @@ pub fn add_readings(
     auth: auth::SensorToken,
     conn: SolDbConn,
     readings: Json<Vec<CreateReading>>,
-) -> Result<Message> {
+) -> ApiResult<Message> {
     let sensor_id = auth.sensor().id;
     let readings = readings
         .0
@@ -139,15 +146,18 @@ pub fn add_readings(
             batt_V: r.batt_V,
         })
         .collect();
-    Reading::insert_many(&readings, &conn).map(|_| Message::new("successfully added readings"))
+    let res = Reading::insert_many(&readings, &conn)
+        .map(|_| Message::new("successfully added readings"))?;
+    Ok(res)
 }
 
 #[post("/token")]
-pub fn get_token(auth: auth::Basic, conn: SolDbConn) -> Result<Data> {
+pub fn get_token(auth: auth::Basic, conn: SolDbConn) -> ApiResult<Data> {
     let user = auth.user();
     let token = Token::new_user_token(&user);
-    Token::insert(&token, &conn)
-        .map(|_count| Data::new("got user token", json!({"token": token.token})))
+    let res = Token::insert(&token, &conn)
+        .map(|_count| Data::new("got user token", json!({"token": token.token})))?;
+    Ok(res)
 }
 
 #[derive(Serialize, Deserialize)]
