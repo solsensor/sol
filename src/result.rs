@@ -1,10 +1,5 @@
 use diesel::result::Error as DieselError;
-use rocket::{
-    http::{ContentType, Status},
-    request::Request,
-    response::{Responder, Response},
-};
-use std::{convert::From, fmt, io::Cursor};
+use std::{convert::From, fmt};
 
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -37,24 +32,5 @@ impl fmt::Display for Error {
 impl From<DieselError> for Error {
     fn from(e: DieselError) -> Self {
         Error::Diesel(e)
-    }
-}
-
-impl<'r> Responder<'r> for Error {
-    fn respond_to(self, _: &Request) -> ::std::result::Result<Response<'r>, Status> {
-        // Create JSON response
-        let resp = json!({
-            "status": "failure",
-            "message": self.to_string(),
-        })
-        .to_string();
-
-        // Respond. The `Ok` here is a bit of a misnomer. It means we
-        // successfully created an error response
-        Ok(Response::build()
-            .status(Status::BadRequest)
-            .header(ContentType::JSON)
-            .sized_body(Cursor::new(resp))
-            .finalize())
     }
 }
