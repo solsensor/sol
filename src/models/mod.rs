@@ -1,11 +1,12 @@
+pub mod onetime_login;
+
 use crate::{
     result::{Error, Result},
     schema::{readings, sensors, tokens, users},
+    util,
 };
 use chrono::NaiveDateTime;
 use diesel::{insert_into, prelude::*, update, Insertable, Queryable};
-use rand::Rng;
-use std::iter;
 
 #[allow(non_snake_case)]
 #[derive(Insertable, Serialize, Deserialize)]
@@ -134,6 +135,11 @@ impl User {
         }
     }
 
+    pub fn by_onetime(tok: &String, conn: &SqliteConnection) -> Result<UserQuery> {
+        let cred = onetime_login::find(tok, conn)?;
+        User::by_id(cred.user_id, conn)
+    }
+
     pub fn verify_password(
         email: &String,
         password: &String,
@@ -222,17 +228,9 @@ pub struct TokenQuery {
 pub struct Token;
 
 impl Token {
-    fn rand_str() -> String {
-        let mut rng = rand::thread_rng();
-        iter::repeat(())
-            .map(|()| rng.sample(rand::distributions::Alphanumeric))
-            .take(64)
-            .collect()
-    }
-
     pub fn new_user_token(user: &UserQuery) -> TokenInsert {
         TokenInsert {
-            token: format!("user-{}", Self::rand_str()),
+            token: format!("user-{}", util::token::rand_str()),
             type_: TokenType::User.get_string(),
             user_id: Some(user.id),
             sensor_id: None,
@@ -241,7 +239,7 @@ impl Token {
 
     pub fn new_sensor_token(sensor: SensorQuery) -> TokenInsert {
         TokenInsert {
-            token: format!("sensor-{}", Self::rand_str()),
+            token: format!("sensor-{}", util::token::rand_str()),
             type_: TokenType::Sensor.get_string(),
             user_id: None,
             sensor_id: Some(sensor.id),

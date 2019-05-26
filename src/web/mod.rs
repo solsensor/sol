@@ -251,3 +251,9 @@ pub fn register_post(form: Form<Register>, conn: SolDbConn) -> WebResult<Redirec
     User::insert(form.email.clone(), form.password.clone(), &conn)?;
     Ok(Redirect::to(uri!(user: form.email)))
 }
+
+#[get("/login/onetime/<token>")]
+pub fn login_onetime(token: String, conn: SolDbConn) -> WebResult<Redirect> {
+    let user = User::by_onetime(&token, &conn)?;
+    Ok(Redirect::to(uri!(user: user.email)))
+}

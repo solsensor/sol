@@ -26,6 +26,7 @@ mod result;
 mod schema;
 #[cfg(test)]
 mod tests;
+mod util;
 mod web;
 
 use crate::db::SolDbConn;
@@ -68,6 +69,7 @@ fn rocket() -> Rocket {
                 web::register_post,
                 web::login,
                 web::login_post,
+                web::login_onetime,
                 web::change_password,
                 web::change_password_post,
                 web::logout,

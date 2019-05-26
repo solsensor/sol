@@ -1,4 +1,13 @@
 table! {
+    onetime_logins (token) {
+        token -> Text,
+        user_id -> Integer,
+        created -> Timestamp,
+        expires -> Timestamp,
+    }
+}
+
+table! {
     readings (id) {
         id -> Integer,
         sensor_id -> Integer,
@@ -42,7 +51,8 @@ table! {
     }
 }
 
+joinable!(onetime_logins -> users (user_id));
 joinable!(sensors -> users (owner_id));
 joinable!(tokens -> users (user_id));
 
-allow_tables_to_appear_in_same_query!(readings, sensors, tokens, users,);
+allow_tables_to_appear_in_same_query!(onetime_logins, readings, sensors, tokens, users,);
