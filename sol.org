@@ -1,0 +1,4 @@
+#+FILETAGS: :sol:
+
+* Sol Tasks
+** TODO Send current time back in readings POST response
