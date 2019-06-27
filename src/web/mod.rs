@@ -1,7 +1,7 @@
 use crate::{
     auth,
     db::SolDbConn,
-    models::{Reading, ReadingQuery, Sensor, SensorQuery, Token, User, UserQuery},
+    models::{onetime_login, Reading, ReadingQuery, Sensor, SensorQuery, Token, User, UserQuery},
 };
 use rocket::{
     get,
@@ -250,6 +250,25 @@ pub fn register_post(form: Form<Register>, conn: SolDbConn) -> WebResult<Redirec
     let form = form.into_inner();
     User::insert(form.email.clone(), form.password.clone(), &conn)?;
     Ok(Redirect::to(uri!(user: form.email)))
+}
+
+#[get("/forgot_password")]
+pub fn forgot_password(mut ctx: TemplateCtx) -> Template {
+    ctx.title = Some(String::from("Forgot Password"));
+    Template::render("forgot_password", ctx)
+}
+
+#[derive(Deserialize, FromForm)]
+pub struct Email {
+    email: String,
+}
+
+#[post("/forgot_password", data = "<form>")]
+pub fn forgot_password_post(form: Email, conn: SolDbConn) -> WebResult<Redirect> {
+    let email = form.email;
+    let user = User::by_email(&email, &conn)?;
+    onetime_login::create(user.id, &conn)?;
+    Ok(Redirect::to("/"))
 }
 
 #[get("/login/onetime/<token>")]
