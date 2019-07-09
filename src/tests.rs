@@ -1,6 +1,5 @@
 use rocket::{http::Status, local::Client};
 use std::fs;
-use serde_json::{ json, Value as JsonValue };
 use insta::assert_snapshot_matches;
 
 fn setup() -> Client {
@@ -24,29 +23,21 @@ fn test_simple_not_ok() {
     assert_eq!(res.status(), Status::NotFound);
 }
 
-#[test]
-fn test_get_users() {
-    let client = setup();
-    let mut res = client.get("/api/users/all").dispatch();
-    let contents = res.body_string().expect("no body content");
-    let actual: JsonValue = serde_json::from_str(&contents).expect("failed to parse json");
-    let expected = json!({
-        "data": {
-            "users": [],
-        },
-        "status": "success",
-        "message": "found all users",
-    });
-
-    assert_eq!(res.status(), Status::Ok);
-    assert_eq!(actual, expected);
+macro_rules! snap {
+    (id: $id:ident, method: $method:ident, path: $path:expr,) => (
+        #[test]
+        fn $id() {
+            let client = setup();
+            let mut res = client.$method($path).dispatch();
+            let contents = res.body_string().expect("no body content");
+            assert_eq!(res.status(), Status::Ok);
+            assert_snapshot_matches!(stringify!($id), contents);
+        }
+    )
 }
 
-#[test]
-fn test_get_users_snapshot() {
-    let client = setup();
-    let mut res = client.get("/api/users/all").dispatch();
-    let contents = res.body_string().expect("no body content");
-    assert_eq!(res.status(), Status::Ok);
-    assert_snapshot_matches!("get users", contents);
+snap!{
+    id: get_users,
+    method: get,
+    path: "/api/users/all",
 }

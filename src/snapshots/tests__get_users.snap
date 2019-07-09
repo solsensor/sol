@@ -1,0 +1,7 @@
+---
+created: "2019-07-09T04:13:35.593831572Z"
+creator: insta@0.8.1
+source: src/tests.rs
+expression: contents
+---
+{"data":{"users":[]},"message":"found all users","status":"success"}
