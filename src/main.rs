@@ -18,6 +18,7 @@ extern crate serde_json;
 extern crate diesel;
 #[macro_use]
 extern crate diesel_migrations;
+extern crate insta;
 
 mod api;
 mod auth;

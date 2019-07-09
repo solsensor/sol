@@ -1,6 +1,7 @@
 use rocket::{http::Status, local::Client};
 use std::fs;
 use serde_json::{ json, Value as JsonValue };
+use insta::assert_snapshot_matches;
 
 fn setup() -> Client {
     fs::remove_file("sol.sqlite");
@@ -39,4 +40,13 @@ fn test_get_users() {
 
     assert_eq!(res.status(), Status::Ok);
     assert_eq!(actual, expected);
+}
+
+#[test]
+fn test_get_users_snapshot() {
+    let client = setup();
+    let mut res = client.get("/api/users/all").dispatch();
+    let contents = res.body_string().expect("no body content");
+    assert_eq!(res.status(), Status::Ok);
+    assert_snapshot_matches!("get users", contents);
 }
