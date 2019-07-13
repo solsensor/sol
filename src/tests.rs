@@ -1,24 +1,28 @@
 use rocket::{http::Status, local::Client};
-use std::fs;
+use std::{io, fs };
 use insta::assert_snapshot_matches;
 
-fn setup() -> Client {
-    fs::remove_file("sol.sqlite");
-    super::db::run_migrations();
-    let rocket = super::rocket();
+fn setup(db_path: &str) -> Client {
+    fs::create_dir_all("target/testdbs/").expect("failed to create test db dir");
+    fs::remove_file(db_path).or_else(|e| match e.kind() {
+        io::ErrorKind::NotFound => Ok(()),
+        _ => Err(e),
+    }).expect("failed to remove existing test db");
+    super::db::run_migrations(db_path);
+    let rocket = super::rocket(super::rocket_config(db_path));
     Client::new(rocket).expect("created test client")
 }
 
 #[test]
 fn test_simple_ok() {
-    let client = setup();
+    let client = setup("target/testdbs/simple_ok.sqlite");
     let res = client.get("/").dispatch();
     assert_eq!(res.status(), Status::Ok);
 }
 
 #[test]
 fn test_simple_not_ok() {
-    let client = setup();
+    let client = setup("target/testdbs/simple_not_ok.sqlite");
     let res = client.get("/invalid_endpoint").dispatch();
     assert_eq!(res.status(), Status::NotFound);
 }

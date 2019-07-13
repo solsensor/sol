@@ -57,18 +57,8 @@ fn not_authorized(req: &Request) -> Flash<Redirect> {
     )
 }
 
-fn rocket() -> Rocket {
-    let mut database_cfg = HashMap::new();
-    let mut databases = HashMap::new();
-    database_cfg.insert("url", Value::from("sol.sqlite"));
-    databases.insert("sqlite_sol", Value::from(database_cfg));
-
-    let config = Config::build(Environment::Staging)
-        .extra("databases", databases)
-        .finalize()
-        .expect("failed to build config");
-
-    rocket::custom(config)
+fn rocket(cfg: Config) -> Rocket {
+    rocket::custom(cfg)
         .mount(
             "/",
             routes![
@@ -110,7 +100,20 @@ fn rocket() -> Rocket {
         .attach(SolDbConn::fairing())
 }
 
+fn rocket_config(db_path: &str) -> Config {
+    let mut database_cfg = HashMap::new();
+    let mut databases = HashMap::new();
+    database_cfg.insert("url", Value::from(db_path));
+    databases.insert("sqlite_sol", Value::from(database_cfg));
+
+    Config::build(Environment::Staging)
+        .extra("databases", databases)
+        .finalize()
+        .expect("failed to build config")
+}
+
 fn main() {
-    db::run_migrations();
-    rocket().launch();
+    let db_path = "sol.sqlite";
+    db::run_migrations(db_path);
+    rocket(rocket_config(db_path)).launch();
 }
