@@ -2,11 +2,11 @@
 ansible:
 	ansible-playbook ansible/playbook.yml
 
-ansible-deps:
-	ansible-galaxy install -r ansible/requirements.yml --force
-
 provision:
 	ansible-playbook ansible/playbook.yml --tags provision
 
-deploy:
-	ansible-playbook --vault-password-file ansible/password.txt ansible/playbook.yml --tags deploy
+build:
+	cargo build --release
+
+deploy: build
+	ansible-playbook ansible/playbook.yml --tags deploy

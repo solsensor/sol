@@ -7,8 +7,7 @@
     letsencrypt_email: letsencrypt@mail.ryanchipman.com
     domain_name: dev.solsensor.com
 
-  vars_files:
-    - vars/creds-encrypted.yml
+  vars_files: []
 
   pre_tasks:
     - raw: apt-get install -y python-simplejson
@@ -86,33 +85,13 @@
         repo: https://github.com/solsensor/sol
         version: master
 
-    - name: Ensure pip3 installed
-      tags: [ install ]
-      apt:
-        name: python3-pip
-        state: latest
-
-    - name: Ensure botocore and boto3 are installed
-      tags: [ install ]
-      pip:
-        name: [ boto3, botocore ]
-        extra_args: --user
-
-    - name: Download latest binary
+    - name: Upload binary
       tags: [ deploy ]
-      aws_s3:
-        aws_access_key: '{{ aws_access_key }}'
-        aws_secret_key: '{{ aws_secret_key }}'
-        bucket: solsensor-ci
-        object: /artifacts/master/target/debug/sol
+      copy:
+        src: ../target/release/sol
         dest: /sol/sol
-        mode: get
-
-    - name: Ensure binary executable
-      tags: [ deploy ]
-      file:
-        path: /sol/sol
-        mode: 777
+        mode: 0777
+        force: true
 
     - name: Create systemd unit file
       tags: [ deploy ]

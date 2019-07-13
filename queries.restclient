@@ -1,7 +1,7 @@
 # -*- restclient -*-
 
 :root = http://localhost:8000
-#:root = https://solsensor.com
+#:root = https://dev.solsensor.com
 
 #
 # Get all users
