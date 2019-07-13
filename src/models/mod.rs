@@ -5,7 +5,7 @@ use crate::{
     schema::{readings, sensors, tokens, users},
     util,
 };
-use chrono::NaiveDateTime;
+use chrono::{naive::serde::ts_seconds, NaiveDateTime };
 use diesel::{insert_into, prelude::*, update, Insertable, Queryable};
 
 #[allow(non_snake_case)]
@@ -33,6 +33,38 @@ pub struct ReadingQuery {
     pub temp_celsius: f32,
     pub batt_V: f32,
     pub created: NaiveDateTime,
+}
+
+#[allow(non_snake_case)]
+#[derive(Serialize)]
+pub struct ReadingQueryUnix {
+    id: i32,
+    sensor_id: i32,
+    #[serde(with = "ts_seconds")]
+    timestamp: NaiveDateTime,
+    peak_power_mW: f32,
+    peak_current_mA: f32,
+    peak_voltage_V: f32,
+    temp_celsius: f32,
+    batt_V: f32,
+    #[serde(with = "ts_seconds")]
+    created: NaiveDateTime,
+}
+
+impl From<ReadingQuery> for ReadingQueryUnix {
+    fn from(r: ReadingQuery) -> Self {
+        ReadingQueryUnix {
+            id: r.id,
+            sensor_id: r.sensor_id,
+            timestamp: r.timestamp,
+            peak_power_mW: r.peak_power_mW,
+            peak_current_mA: r.peak_current_mA,
+            peak_voltage_V: r.peak_voltage_V,
+            temp_celsius: r.temp_celsius,
+            batt_V: r.batt_V,
+            created: r.created,
+        }
+    }
 }
 
 pub struct Reading;

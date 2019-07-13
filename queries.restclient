@@ -70,10 +70,8 @@ Content-Type: application/json
 # Get a sensor token
 #
 
-:user-token = DTYZYI5YSsH7hnIZrofhe2HhsaI4yZfgiPgED6pHSToiQI0wHWz9RqK8oPaZ3sMV
 :sensor-id =  1
 :owner-id = 1
-:hardware-id = 12345
 
 POST :root/api/sensor_token
 Authorization: bearer :user-token
@@ -115,4 +113,10 @@ Content-Type: application/json
 # Get readings in range
 #
 
-GET :root/api/sensor/10/readings?start=1548210420&end=1548220420
+GET :root/api/sensor/1/readings?start=1448210420&end=1648220420
+
+#
+# Get readings with unixtime-formatted dates
+#
+
+GET :root/api/sensor/1/readings?start=1448210420&end=1648220420&unixtime=true
