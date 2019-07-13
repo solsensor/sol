@@ -34,9 +34,10 @@ use crate::db::SolDbConn;
 use rocket::{
     response::{Flash, NamedFile, Redirect},
     Request, Rocket,
+    config::{Config, Environment, Value},
 };
 use rocket_contrib::templates::Template;
-use std::path::{Path, PathBuf};
+use std::{collections::HashMap, path::{Path, PathBuf} };
 
 #[get("/<path..>")]
 fn files(path: PathBuf) -> Option<NamedFile> {
@@ -57,7 +58,17 @@ fn not_authorized(req: &Request) -> Flash<Redirect> {
 }
 
 fn rocket() -> Rocket {
-    rocket::ignite()
+    let mut database_cfg = HashMap::new();
+    let mut databases = HashMap::new();
+    database_cfg.insert("url", Value::from("sol.sqlite"));
+    databases.insert("sqlite_sol", Value::from(database_cfg));
+
+    let config = Config::build(Environment::Staging)
+        .extra("databases", databases)
+        .finalize()
+        .expect("failed to build config");
+
+    rocket::custom(config)
         .mount(
             "/",
             routes![

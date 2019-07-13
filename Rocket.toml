@@ -1,3 +1,0 @@
-
-[global.databases]
-sqlite_sol = { url = "sol.sqlite" }
