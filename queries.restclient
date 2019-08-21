@@ -42,13 +42,6 @@ Content-Type: application/json
 
 POST :root/api/token
 Authorization: Basic :hash
-Content-Type: application/json
-
-{
-  "email": ":email",
-  "password": ":password"
-}
-
 
 #
 # Add a sensor
