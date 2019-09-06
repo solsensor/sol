@@ -278,7 +278,10 @@ pub fn register_post(form: Form<Register>, conn: SolDbConn) -> WebResult<Redirec
 }
 
 #[get("/login/onetime/<token>")]
-pub fn login_onetime(token: String, conn: SolDbConn) -> WebResult<Redirect> {
+pub fn login_onetime(token: String, conn: SolDbConn, mut cookies: Cookies) -> WebResult<Redirect> {
     let user = User::by_onetime(&token, &conn)?;
+    let token = Token::new_user_token(&user);
+    Token::insert(&token, &conn)?;
+    cookies.add_private(Cookie::build("user_token", token.token).path("/").finish());
     Ok(Redirect::to(uri!(user: user.email)))
 }
