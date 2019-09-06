@@ -27,7 +27,7 @@ pub fn add_user(user: Json<Register>, conn: SolDbConn) -> ApiResult<Message> {
 }
 
 #[get("/users/all")]
-pub fn get_users(conn: SolDbConn) -> ApiResult<Data> {
+pub fn get_users(conn: SolDbConn, _admin: auth::AdminToken) -> ApiResult<Data> {
     let res =
         User::all(&conn).map(|users| Data::new("found all users", json!({ "users": users })))?;
     Ok(res)

@@ -172,3 +172,21 @@ impl<'a, 'r> FromRequest<'a, 'r> for UserToken {
         }
     }
 }
+
+pub struct AdminToken(UserQuery);
+
+impl<'a, 'r> FromRequest<'a, 'r> for AdminToken {
+    type Error = String;
+    fn from_request(req: &'a Request<'r>) -> Outcome<Self, (Status, String), ()> {
+        let token: UserToken = req.guard()?;
+        let user = token.0;
+        if user.superuser {
+            Outcome::Success(AdminToken(user))
+        } else {
+            Outcome::Failure((
+                Status::Unauthorized,
+                format!("user is not an admin user"),
+            ))
+        }
+    }
+}
