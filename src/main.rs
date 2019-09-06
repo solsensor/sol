@@ -32,10 +32,14 @@ mod web;
 
 use crate::db::SolDbConn;
 use rocket::{
-    response::{Flash, NamedFile, Redirect},
+    http::Status,
+    response::{Flash, NamedFile, Redirect, Responder, Response},
     Request, Rocket,
 };
-use rocket_contrib::templates::Template;
+use rocket_contrib::{
+    json::JsonValue,
+    templates::Template,
+};
 use std::path::{Path, PathBuf};
 
 #[get("/<path..>")]
@@ -48,12 +52,31 @@ fn set_flash() -> Flash<Redirect> {
     Flash::success(Redirect::to("/"), "this is a flash message!")
 }
 
+enum AnyResponder {
+    Json(JsonValue),
+    Flash(Flash<Redirect>),
+}
+
+impl<'r> Responder<'r> for AnyResponder {
+    fn respond_to(self, req: &Request) -> ::std::result::Result<Response<'r>, Status> {
+        match self {
+            AnyResponder::Json(j) => j.respond_to(req),
+            AnyResponder::Flash(f) => f.respond_to(req),
+        }
+    }
+}
+
 #[catch(401)]
-fn not_authorized(req: &Request) -> Flash<Redirect> {
-    Flash::error(
-        Redirect::to("/login"),
-        format!("not authorized to access {}", req.uri().path()),
-    )
+fn not_authorized(req: &Request) -> AnyResponder {
+    let msg = format!("not authorized to access {}", req.uri().path());
+    if &req.uri().path()[0..4] == "/api" {
+        AnyResponder::Json(json!({
+            "status": "failure",
+            "message": msg,
+        }))
+    } else {
+        AnyResponder::Flash(Flash::error(Redirect::to("/login"), msg))
+    }
 }
 
 fn rocket() -> Rocket {
