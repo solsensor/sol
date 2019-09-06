@@ -36,10 +36,7 @@ use rocket::{
     response::{Flash, NamedFile, Redirect, Responder, Response},
     Request, Rocket,
 };
-use rocket_contrib::{
-    json::JsonValue,
-    templates::Template,
-};
+use rocket_contrib::{json::JsonValue, templates::Template};
 use std::path::{Path, PathBuf};
 
 #[get("/<path..>")]
