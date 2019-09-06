@@ -106,7 +106,8 @@ pub fn user_edit_post(
     conn: SolDbConn,
 ) -> WebResult<Flash<Redirect>> {
     let user = User::by_email(&email, &conn)?;
-    if user.id != auth.user().id {
+    let editor = auth.user();
+    if user.id != editor.id && !editor.superuser {
         return Ok(Flash::error(
             Redirect::to(uri!(user: email)),
             "not logged in as this user",
