@@ -94,6 +94,8 @@ fn rocket() -> Rocket {
                 web::login,
                 web::login_post,
                 web::login_onetime,
+                web::forgot_password,
+                web::forgot_password_post,
                 web::change_password,
                 web::change_password_post,
                 web::logout,

@@ -1,7 +1,7 @@
 use crate::{
     auth,
     db::SolDbConn,
-    models::{Reading, ReadingQuery, Sensor, SensorQuery, Token, User, UserQuery},
+    models::{Reading, ReadingQuery, Sensor, SensorQuery, Token, User, UserQuery, onetime_login},
 };
 use rocket::{
     get,
@@ -206,6 +206,30 @@ pub fn change_password_post(
     User::update_password(user.id, pwd, &conn)?;
     cookies.remove_private(Cookie::named("user_token"));
     Ok(Redirect::to("/login"))
+}
+
+#[derive(Deserialize, FromForm)]
+pub struct Email {
+    email: String,
+}
+
+#[get("/forgot_password")]
+pub fn forgot_password(mut ctx: TemplateCtx) -> Template {
+    ctx.title = Some(String::from("Forgot Password"));
+    Template::render("forgot_password", &ctx)
+}
+
+#[post("/forgot_password", data = "<form>")]
+pub fn forgot_password_post(
+    form: Form<Email>,
+    conn: SolDbConn,
+) -> WebResult<Flash<Redirect>> {
+    let user = User::by_email(&form.0.email, &conn)?;
+    onetime_login::create(user.id, &conn)?;
+    Ok(Flash::success(
+        Redirect::to("/forgot_password"),
+        "temporary password has been emailed",
+    ))
 }
 
 #[get("/logout")]
