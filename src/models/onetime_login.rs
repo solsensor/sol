@@ -28,6 +28,12 @@ pub fn create(user_id: i32, conn: &SqliteConnection) -> Result<String> {
     Ok(login.token)
 }
 
+pub fn delete(tok: &String, conn: &SqliteConnection) -> Result<()> {
+    use crate::schema::onetime_logins::dsl::{onetime_logins, token};
+    diesel::delete(onetime_logins.filter(token.eq(tok))).execute(conn)?;
+    Ok(())
+}
+
 pub fn find(tok: &String, conn: &SqliteConnection) -> Result<OnetimeLogin> {
     use crate::schema::onetime_logins::dsl::{onetime_logins, token};
     let cred = onetime_logins.filter(token.eq(tok)).first(conn)?;
