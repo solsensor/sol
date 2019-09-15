@@ -1,12 +1,12 @@
-use diesel::Connection;
+use diesel::{Connection, SqliteConnection};
 use diesel_migrations::embed_migrations;
-
-#[database("sqlite_sol")]
-pub struct SolDbConn(diesel::SqliteConnection);
 
 embed_migrations!("./migrations");
 
-pub fn run_migrations() {
-    let conn = diesel::SqliteConnection::establish("./sol.sqlite").expect("error connecting to db");
+#[database("sqlite_sol")]
+pub struct SolDbConn(SqliteConnection);
+
+pub fn run_migrations(uri: &str) {
+    let conn = SqliteConnection::establish(uri).expect("error connecting to db");
     embedded_migrations::run(&conn).expect("failed to run migrations");
 }
