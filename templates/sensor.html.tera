@@ -2,18 +2,26 @@
 {% block body %}
 <section class="section">
   <div class="container">
+
 	<p class="title">{% if sensor.name %}{{sensor.name}}{% else %}Sensor {{sensor.id}}{% endif %}</p>
 	{% if sensor.description %}<p class="subtitle">{{sensor.description}}</p>{% endif %}
+
 	<div class="box">
 	  <p>id: {{sensor.id}}</p>
 	  <p>owner_id: {{sensor.owner_id}}</p>
 	  <p>hardware_id: {{sensor.hardware_id}}</p>
 	  {% if current_user and current_user.id == sensor.owner_id %}<a href="/sensor/{{sensor.id}}/edit">Edit Sensor</a>{% endif %}
 	</div>
+
+	<p class="title">Energy Generated (last 10 days)</p>
+	<p class="subtitle">{{energy.mWh}} mWh</p>
+	<p></p>
+
 	<p class="title">Charts (last 10 days)</p>
 	<div class="box">
 		<div id="charts"></div>
 	</div>
+
 	<p class="title">Last 20 Readings</p>
 	<table class="table">
       <thead>
@@ -39,6 +47,7 @@
 		{% endfor %}
 	  </tbody>
 	</table>
+
   </div>
 </section>
 <script type="text/javascript" src="/static/vega-4.js"></script>

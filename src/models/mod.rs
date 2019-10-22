@@ -5,8 +5,8 @@ use crate::{
     schema::{readings, sensors, tokens, users},
     util,
 };
-use chrono::{naive::serde::ts_seconds, NaiveDateTime };
-use diesel::{insert_into, prelude::*, update, Insertable, Queryable};
+use chrono::{naive::serde::ts_seconds, NaiveDateTime};
+use diesel::{insert_into, prelude::*, sql_query, sql_types::Float, update, Insertable, Queryable};
 
 #[allow(non_snake_case)]
 #[derive(Insertable, Serialize, Deserialize)]
@@ -114,6 +114,13 @@ impl Reading {
             .load(conn)
             .map_err(|e| e.into())
     }
+}
+
+#[allow(non_snake_case)]
+#[derive(Serialize, QueryableByName, Clone, Copy)]
+pub struct Energy {
+    #[sql_type = "Float"]
+    pub mWh: f32,
 }
 
 #[derive(Insertable, Serialize, Clone)]
@@ -384,5 +391,19 @@ impl Sensor {
             .values(sensor)
             .execute(conn)
             .map_err(|e| e.into())
+    }
+
+    pub fn energy_this_week(sensor_id: i32, conn: &SqliteConnection) -> Result<Energy> {
+        let query = format!("
+with
+ src as (select * from readings where sensor_id = {sensor_id} and timestamp > datetime('now', '-10 days')),
+ wins as (select peak_power_mW as pa, timestamp as ta, lead(peak_power_mW) over win as pb, lead(timestamp) over win as tb from src window win as (order by timestamp asc)),
+ filtered as (select * from wins where tb is not null),
+ calcs as (select min(pa, pb) as p0, abs(pa-pb) as dp, (julianday(tb)-julianday(ta))*(24) as dt from filtered),
+ areas as (select p0*dt + dp*dt*0.5 as area from calcs)
+select sum(area) as mWh from areas;",
+                            sensor_id=sensor_id);
+        let res: Vec<Energy> = sql_query(query).load(conn)?;
+        Ok(res[0])
     }
 }
