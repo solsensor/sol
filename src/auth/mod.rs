@@ -183,10 +183,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for AdminToken {
         if user.superuser {
             Outcome::Success(AdminToken(user))
         } else {
-            Outcome::Failure((
-                Status::Unauthorized,
-                format!("user is not an admin user"),
-            ))
+            Outcome::Failure((Status::Unauthorized, format!("user is not an admin user")))
         }
     }
 }
