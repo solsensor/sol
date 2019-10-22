@@ -1,7 +1,7 @@
 use crate::{
     auth,
     db::SolDbConn,
-    models::{Reading, ReadingQueryUnix, ReadingInsert, Sensor, SensorInsert, Token, User},
+    models::{Reading, ReadingInsert, ReadingQueryUnix, Sensor, SensorInsert, Token, User},
     result::Error,
 };
 use chrono::NaiveDateTime;
@@ -54,6 +54,13 @@ impl<'de> serde::Deserialize<'de> for UnixEpochTime {
     }
 }
 
+#[get("/sensor/<id>/energy_stats")]
+pub fn get_energy_stats(id: i32, conn: SolDbConn) -> ApiResult<Data> {
+    let stats = Sensor::energy_stats(id, &conn)?;
+    let res = Data::new("retrieved energy stats", json!({ "stats": stats }));
+    Ok(res)
+}
+
 #[get("/sensor/<id>/readings?<start>&<end>&<unixtime>")]
 pub fn get_readings(
     id: i32,
@@ -66,9 +73,10 @@ pub fn get_readings(
         Reading::find_for_sensor_in_time_range(id, start.0, end.0, &conn).map(|readings| {
             let obj = match unixtime {
                 Some(true) => {
-                    let rs: Vec<ReadingQueryUnix> = readings.into_iter().map(ReadingQueryUnix::from).collect();
+                    let rs: Vec<ReadingQueryUnix> =
+                        readings.into_iter().map(ReadingQueryUnix::from).collect();
                     json!({ "readings": rs })
-                },
+                }
                 _ => json!({ "readings": readings }),
             };
             Data::new("found all readings for sensor in range", obj)

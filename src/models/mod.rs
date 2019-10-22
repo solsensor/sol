@@ -5,8 +5,14 @@ use crate::{
     schema::{readings, sensors, tokens, users},
     util,
 };
-use chrono::{naive::serde::ts_seconds, NaiveDateTime};
-use diesel::{insert_into, prelude::*, sql_query, sql_types::Float, update, Insertable, Queryable};
+use chrono::{naive::serde::ts_seconds, NaiveDate, NaiveDateTime};
+use diesel::{
+    insert_into,
+    prelude::*,
+    sql_query,
+    sql_types::{Date, Float},
+    update, Insertable, Queryable,
+};
 
 #[allow(non_snake_case)]
 #[derive(Insertable, Serialize, Deserialize)]
@@ -119,8 +125,16 @@ impl Reading {
 #[allow(non_snake_case)]
 #[derive(Serialize, QueryableByName, Clone, Copy)]
 pub struct Energy {
+    #[sql_type = "Date"]
+    pub date: NaiveDate,
     #[sql_type = "Float"]
-    pub mWh: f32,
+    pub equiv_kWh: f32,
+    #[sql_type = "Float"]
+    pub cap_factor: f32,
+    #[sql_type = "Float"]
+    pub dollars_saved: f32,
+    #[sql_type = "Float"]
+    pub co2_saved: f32,
 }
 
 #[derive(Insertable, Serialize, Clone)]
@@ -393,17 +407,25 @@ impl Sensor {
             .map_err(|e| e.into())
     }
 
-    pub fn energy_this_week(sensor_id: i32, conn: &SqliteConnection) -> Result<Energy> {
-        let query = format!("
+    pub fn energy_stats(sensor_id: i32, conn: &SqliteConnection) -> Result<Vec<Energy>> {
+        let query = format!(
+"
 with
- src as (select * from readings where sensor_id = {sensor_id} and timestamp > datetime('now', '-10 days')),
+ src as (select * from readings where sensor_id = {sensor_id} and timestamp > date('now', '-{lookback_days} days')),
  wins as (select peak_power_mW as pa, timestamp as ta, lead(peak_power_mW) over win as pb, lead(timestamp) over win as tb from src window win as (order by timestamp asc)),
  filtered as (select * from wins where tb is not null),
- calcs as (select min(pa, pb) as p0, abs(pa-pb) as dp, (julianday(tb)-julianday(ta))*(24) as dt from filtered),
- areas as (select p0*dt + dp*dt*0.5 as area from calcs)
-select sum(area) as mWh from areas;",
-                            sensor_id=sensor_id);
+ calcs as (select ta as ts, min(pa, pb) as p0, abs(pa-pb) as dp, (julianday(tb)-julianday(ta))*(24) as dt from filtered),
+ areas as (select ts, p0*dt + dp*dt*0.5 as mWh from calcs),
+ by_day as (select date(ts) as date, sum(mWh) as sol_mWh from areas group by date),
+ stats1 as (select *, sol_mWh*7895 as equiv_mWh, sol_mWh/(570*24) as cap_factor from by_day),
+ stats2 as (select *, equiv_mWh/(1000*1000) as equiv_kWh from stats1),
+ stats3 as (select *, equiv_kWh*0.12 as dollars_saved, equiv_kWh*1.6 as co2_saved from stats2)
+select * from stats3;
+",
+            sensor_id = sensor_id,
+            lookback_days = 10
+        );
         let res: Vec<Energy> = sql_query(query).load(conn)?;
-        Ok(res[0])
+        Ok(res)
     }
 }

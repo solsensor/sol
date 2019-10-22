@@ -126,6 +126,7 @@ fn rocket(db_uri: &str) -> Rocket {
                 api::add_reading,
                 api::add_readings,
                 api::get_readings,
+                api::get_energy_stats,
             ],
         )
         .mount("/static", routes![files])

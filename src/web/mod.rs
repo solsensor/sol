@@ -1,9 +1,7 @@
 use crate::{
     auth,
     db::SolDbConn,
-    models::{
-        onetime_login, Energy, Reading, ReadingQuery, Sensor, SensorQuery, Token, User, UserQuery,
-    },
+    models::{onetime_login, Reading, ReadingQuery, Sensor, SensorQuery, Token, User, UserQuery},
 };
 use rocket::{
     get,
@@ -28,7 +26,6 @@ pub struct TemplateCtx {
     sensors: Option<Vec<SensorQuery>>,
     sensor: Option<SensorQuery>,
     readings: Option<Vec<ReadingQuery>>,
-    energy: Option<Energy>,
 }
 
 impl<'a, 'r> FromRequest<'a, 'r> for TemplateCtx {
@@ -53,7 +50,6 @@ impl<'a, 'r> FromRequest<'a, 'r> for TemplateCtx {
             sensors: None,
             sensor: None,
             readings: None,
-            energy: None,
         };
         Outcome::Success(ctx)
     }
@@ -132,11 +128,9 @@ pub fn sensor(mut ctx: TemplateCtx, id: i32, conn: SolDbConn) -> WebResult<Templ
     let sensor = Sensor::find(id, &conn)?;
     let readings = Reading::find_for_sensor(sensor.id, &conn)?;
     let readings = Some(readings.into_iter().take(20).collect());
-    let energy = Sensor::energy_this_week(sensor.id, &conn)?;
     ctx.title = Some(format!("sensor {}", id));
     ctx.sensor = Some(sensor);
     ctx.readings = readings;
-    ctx.energy = Some(energy);
     Ok(Template::render("sensor", &ctx))
 }
 

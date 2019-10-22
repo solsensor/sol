@@ -13,13 +13,10 @@
 	  {% if current_user and current_user.id == sensor.owner_id %}<a href="/sensor/{{sensor.id}}/edit">Edit Sensor</a>{% endif %}
 	</div>
 
-	<p class="title">Energy Generated (last 10 days)</p>
-	<p class="subtitle">{{energy.mWh}} mWh</p>
-	<p></p>
-
-	<p class="title">Charts (last 10 days)</p>
+	<p class="title">Charts</p>
+	<p class="subtitle">For a 5kW equivalent system</p>
 	<div class="box">
-		<div id="charts"></div>
+		<div id="stats-charts"></div>
 	</div>
 
 	<p class="title">Last 20 Readings</p>
@@ -53,5 +50,5 @@
 <script type="text/javascript" src="/static/vega-4.js"></script>
 <script type="text/javascript" src="/static/vega-lite-3.js"></script>
 <script type="text/javascript" src="/static/vega-embed-3.js"></script>
-<script type="text/javascript" src="/static/static-chart.js"></script>
+<script type="text/javascript" src="/static/stats-charts.js"></script>
 {% endblock body %}
