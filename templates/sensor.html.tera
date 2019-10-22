@@ -45,10 +45,17 @@
 	  </tbody>
 	</table>
 
+	<p class="title">More Charts</p>
+	<p class="subtitle">Raw readings data from the past 5 days</p>
+	<div class="box">
+		<div id="reading-charts"></div>
+	</div>
+
   </div>
 </section>
 <script type="text/javascript" src="/static/vega-4.js"></script>
 <script type="text/javascript" src="/static/vega-lite-3.js"></script>
 <script type="text/javascript" src="/static/vega-embed-3.js"></script>
 <script type="text/javascript" src="/static/stats-charts.js"></script>
+<script type="text/javascript" src="/static/reading-charts.js"></script>
 {% endblock body %}

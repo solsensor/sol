@@ -1,4 +1,4 @@
-var startTime = moment().subtract(10, 'days').format('X');
+var startTime = moment().subtract(5, 'days').format('X');
 var endTime = moment().format('X');
 
 var a = document.createElement('a');
@@ -121,4 +121,4 @@ var embedOpts = {
 	actions: false,
 };
 
-vegaEmbed('#charts', spec, embedOpts);
+vegaEmbed('#reading-charts', spec, embedOpts);
