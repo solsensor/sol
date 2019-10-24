@@ -13,7 +13,7 @@ use rocket::{
 };
 use rocket_contrib::templates::Template;
 
-mod result;
+pub(crate) mod result;
 use self::result::Result as WebResult;
 
 #[derive(Serialize)]

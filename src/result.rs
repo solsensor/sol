@@ -1,4 +1,10 @@
+use crate::{api::result::Error as ApiError, web::result::Error as WebError};
 use diesel::result::Error as DieselError;
+use rocket::{
+    http::Status,
+    request::Request,
+    response::{Responder, Response},
+};
 use std::{convert::From, fmt};
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -8,9 +14,16 @@ pub enum Error {
     Diesel(DieselError),
     DuplicateHardwareId(i64),
     IncorrectPassword,
+    InvalidToken,
+    MalformedToken,
+    MissingToken,
+    MissingBasicAuthHeader,
+    MalformedBasicAuthHeader,
     WrongTokenType,
     NotSensorOwner,
     NoTokenInRequest,
+    NotAdmin,
+    DbConnectionFailed,
 }
 
 impl fmt::Display for Error {
@@ -21,9 +34,16 @@ impl fmt::Display for Error {
                 format!("active sensor with hardware id {} already exists", id)
             }
             Error::IncorrectPassword => "incorrect password".into(),
+            Error::InvalidToken => "invalid token".into(),
+            Error::MissingToken => "missing token".into(),
+            Error::MissingBasicAuthHeader => "missing basic auth header".into(),
+            Error::MalformedBasicAuthHeader => "malformed basic auth header".into(),
+            Error::MalformedToken => "malformed token".into(),
             Error::WrongTokenType => "wrong token type".into(),
             Error::NotSensorOwner => "user is not the owner of this sensor".into(),
             Error::NoTokenInRequest => "failed to get auth token from request".into(),
+            Error::NotAdmin => "user is not an admin".into(),
+            Error::DbConnectionFailed => "failed to connect to the database".into(),
         };
         write!(f, "{}", msg)
     }
@@ -32,5 +52,15 @@ impl fmt::Display for Error {
 impl From<DieselError> for Error {
     fn from(e: DieselError) -> Self {
         Error::Diesel(e)
+    }
+}
+
+impl<'r> Responder<'r> for Error {
+    fn respond_to(self, req: &Request) -> ::std::result::Result<Response<'r>, Status> {
+        if &req.uri().path()[0..4] == "/api" {
+            ApiError::from(self).respond_to(req)
+        } else {
+            WebError::from(self).respond_to(req)
+        }
     }
 }

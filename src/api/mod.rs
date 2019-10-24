@@ -2,7 +2,7 @@ use crate::{
     auth,
     db::SolDbConn,
     models::{Reading, ReadingInsert, ReadingQueryUnix, Sensor, SensorInsert, Token, User},
-    result::Error,
+    result::{Error, Result},
 };
 use chrono::NaiveDateTime;
 use rocket::{get, http::RawStr, post, request::FromFormValue};
@@ -11,7 +11,7 @@ use rocket_contrib::json::Json;
 mod res;
 use self::res::{Data, Message};
 
-mod result;
+pub(crate) mod result;
 use self::result::Result as ApiResult;
 
 #[derive(Deserialize)]
@@ -27,7 +27,8 @@ pub fn add_user(user: Json<Register>, conn: SolDbConn) -> ApiResult<Message> {
 }
 
 #[get("/users/all")]
-pub fn get_users(conn: SolDbConn, _admin: auth::AdminToken) -> ApiResult<Data> {
+pub fn get_users(conn: SolDbConn, admin: Result<auth::AdminToken>) -> ApiResult<Data> {
+    admin?;
     let res =
         User::all(&conn).map(|users| Data::new("found all users", json!({ "users": users })))?;
     Ok(res)
@@ -165,8 +166,8 @@ pub fn add_readings(
 }
 
 #[post("/token")]
-pub fn get_token(auth: auth::Basic, conn: SolDbConn) -> ApiResult<Data> {
-    let user = auth.user();
+pub fn get_token(auth: Result<auth::Basic>, conn: SolDbConn) -> ApiResult<Data> {
+    let user = auth?.user();
     let token = Token::new_user_token(&user);
     let res = Token::insert(&token, &conn)
         .map(|_count| Data::new("got user token", json!({"token": token.token})))?;
