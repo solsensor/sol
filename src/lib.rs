@@ -32,7 +32,7 @@ mod web;
 
 use crate::db::SolDbConn;
 use rocket::{
-    config::{Config, Environment},
+    config::{Config, Environment, LoggingLevel},
     http::Status,
     response::{Flash, NamedFile, Redirect, Responder, Response},
     Request, Rocket,
@@ -80,12 +80,17 @@ fn not_authorized(req: &Request) -> AnyResponder {
     }
 }
 
-fn rocket(db_uri: &str) -> Rocket {
+fn rocket(db_uri: &str, quiet: bool) -> Rocket {
     let mut databases = HashMap::new();
     let mut sol = HashMap::new();
     sol.insert("url", db_uri);
     databases.insert("sqlite_sol", sol);
     let config = Config::build(Environment::Staging)
+        .log_level(if quiet {
+            LoggingLevel::Off
+        } else {
+            LoggingLevel::Normal
+        })
         .extra("databases", databases)
         .finalize()
         .expect("failed to build config");
@@ -139,5 +144,5 @@ const DB_URI: &'static str = "./sol.sqlite";
 
 pub fn run_server() {
     db::run_migrations(DB_URI);
-    rocket(DB_URI).launch();
+    rocket(DB_URI, false).launch();
 }
