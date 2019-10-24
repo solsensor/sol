@@ -10,13 +10,13 @@ macro_rules! assert_body_json {
 }
 
 macro_rules! assert_res_json {
-    ($res:ident, $status:ident, $js:tt) => {
+    ($res:ident, $status:expr, $js:tt) => {
         assert_body_json!($res, $js);
-        assert_eq!($res.status(), Status::$status);
+        assert_eq!($res.status(), $status);
     };
 }
 
-mod create_user {
+mod user {
     use super::*;
 
     #[test]
@@ -24,24 +24,44 @@ mod create_user {
         let client = test_client();
         let req = client.get("/api/users/all");
         let mut res = req.dispatch();
-        assert_res_json!(res, Unauthorized, {
+        assert_res_json!(res, Status::BadRequest, {
             "status": "failure",
-            "message": "not authorized to access /api/users/all",
+            "message": "ApiError(missing token)",
         });
     }
 
     #[test]
-    fn simple() {
+    fn get_token_no_auth_header() {
         let client = test_client();
-        let req = client
+        let mut res = client.post("/api/token").dispatch();
+        assert_res_json!(res, Status::BadRequest, {
+            "status": "failure",
+            "message": "ApiError(missing basic auth header)",
+        });
+    }
+
+    #[test]
+    fn create_and_get_token() {
+        let client = test_client();
+
+        let mut res = client
             .post("/api/users/new")
             .header(ContentType::JSON)
-            .body(json!({"email": "newuser@gmail.com", "password": "mypassword"}).to_string());
-
-        let mut res = req.dispatch();
-        assert_res_json!(res, Ok, {
+            .body(json!({"email": "newuser@gmail.com", "password": "mypassword"}).to_string())
+            .dispatch();
+        assert_res_json!(res, Status::Ok, {
             "status": "success",
             "message": "successfully created user",
+        });
+
+        let mut res = client
+            .post("/api/token")
+            .header(ContentType::JSON)
+            .body(json!({"email": "newuser@gmail.com", "password": "mypassword"}).to_string())
+            .dispatch();
+        assert_res_json!(res, Status::Ok, {
+            "status": "success",
+            "message": "successfully got token",
         });
     }
 }
