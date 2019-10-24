@@ -1,5 +1,5 @@
 use crate::tests::util::test_client;
-use rocket::http::{ContentType, Status};
+use rocket::http::{ContentType, Header, Status};
 
 macro_rules! assert_body_json {
     ($res:ident, $js:tt) => {
@@ -14,6 +14,11 @@ macro_rules! assert_res_json {
         assert_body_json!($res, $js);
         assert_eq!($res.status(), $status);
     };
+}
+
+fn basic_auth_header(email: &str, password: &str) -> Header<'static> {
+    let hash = base64::encode(&format!("{}:{}", email, password));
+    Header::new("Authorization", format!("Basic {}", hash))
 }
 
 mod user {
@@ -57,11 +62,12 @@ mod user {
         let mut res = client
             .post("/api/token")
             .header(ContentType::JSON)
+            .header(basic_auth_header("newuser@gmail.com", "mypassword"))
             .body(json!({"email": "newuser@gmail.com", "password": "mypassword"}).to_string())
             .dispatch();
         assert_res_json!(res, Status::Ok, {
             "status": "success",
-            "message": "successfully got token",
+            "message": "got user token",
         });
     }
 }
