@@ -184,16 +184,20 @@ pub struct CreateSensor {
     hardware_id: i64,
 }
 
+#[derive(Serialize, Deserialize, PartialEq)]
+pub struct AddSensorResponse {}
+
 #[post("/add_sensor", format = "application/json", data = "<data>")]
 pub fn add_sensor(
-    auth: auth::UserToken,
+    auth: Result<auth::UserToken>,
     data: Json<CreateSensor>,
     conn: SolDbConn,
-) -> ApiResult<Message> {
+) -> ApiResult<Json<AddSensorResponse>> {
+    let auth = auth?;
     let sensor = SensorInsert {
         owner_id: auth.user().id,
         hardware_id: data.hardware_id,
     };
     Sensor::insert(&sensor, &conn)?;
-    Ok(Message::new("successfully added sensor"))
+    Ok(Json(AddSensorResponse {}))
 }
