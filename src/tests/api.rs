@@ -21,50 +21,46 @@ fn basic_auth_header(email: &str, password: &str) -> Header<'static> {
     Header::new("Authorization", format!("Basic {}", hash))
 }
 
-mod user {
-    use super::*;
+#[test]
+fn get_users_unauthorized() {
+    let client = test_client();
+    let req = client.get("/api/users/all");
+    let mut res = req.dispatch();
+    assert_res_json!(res, Status::BadRequest, {
+        "error": "ApiError(missing token)",
+    });
+}
 
-    #[test]
-    fn get_users_unauthorized() {
-        let client = test_client();
-        let req = client.get("/api/users/all");
-        let mut res = req.dispatch();
-        assert_res_json!(res, Status::BadRequest, {
-            "error": "ApiError(missing token)",
-        });
-    }
+#[test]
+fn get_token_no_auth_header() {
+    let client = test_client();
+    let mut res = client.post("/api/token").dispatch();
+    assert_res_json!(res, Status::BadRequest, {
+        "error": "ApiError(missing basic auth header)",
+    });
+}
 
-    #[test]
-    fn get_token_no_auth_header() {
-        let client = test_client();
-        let mut res = client.post("/api/token").dispatch();
-        assert_res_json!(res, Status::BadRequest, {
-            "error": "ApiError(missing basic auth header)",
-        });
-    }
+#[test]
+fn create_and_get_token() {
+    let client = test_client();
 
-    #[test]
-    fn create_and_get_token() {
-        let client = test_client();
+    let mut res = client
+        .post("/api/users/new")
+        .header(ContentType::JSON)
+        .body(json!({"email": "newuser@gmail.com", "password": "mypassword"}).to_string())
+        .dispatch();
+    assert_res_json!(res, Status::Ok, {
+        "status": "success",
+        "message": "successfully created user",
+    });
 
-        let mut res = client
-            .post("/api/users/new")
-            .header(ContentType::JSON)
-            .body(json!({"email": "newuser@gmail.com", "password": "mypassword"}).to_string())
-            .dispatch();
-        assert_res_json!(res, Status::Ok, {
-            "status": "success",
-            "message": "successfully created user",
-        });
-
-        let mut res = client
-            .post("/api/token")
-            .header(ContentType::JSON)
-            .header(basic_auth_header("newuser@gmail.com", "mypassword"))
-            .body(json!({"email": "newuser@gmail.com", "password": "mypassword"}).to_string())
-            .dispatch();
-        let contents = res.body_string().expect("no body");
-        let res: GetTokenResponse = serde_json::from_str(&contents).expect("failed to deserialize");
-        assert_eq!(&res.token[..5], "user-");
-    }
+    let mut res = client
+        .post("/api/token")
+        .header(ContentType::JSON)
+        .header(basic_auth_header("newuser@gmail.com", "mypassword"))
+        .body(json!({"email": "newuser@gmail.com", "password": "mypassword"}).to_string())
+        .dispatch();
+    let contents = res.body_string().expect("no body");
+    let res: GetTokenResponse = serde_json::from_str(&contents).expect("failed to deserialize");
+    assert_eq!(&res.token[..5], "user-");
 }
