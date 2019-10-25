@@ -5,7 +5,13 @@ use crate::{
     result::{Error, Result},
 };
 use chrono::NaiveDateTime;
-use rocket::{get, http::RawStr, post, request::FromFormValue};
+use rocket::{
+    get,
+    http::{RawStr, Status},
+    post,
+    request::{FromFormValue, Request},
+    response::{Responder, Response},
+};
 use rocket_contrib::json::Json;
 
 mod res;
@@ -165,12 +171,32 @@ pub fn add_readings(
     Ok(res)
 }
 
+macro_rules! response {
+    (name: $name:ident, fields: $fields:tt,) => {
+        #[derive(Serialize, Deserialize, PartialEq)]
+        pub struct $name $fields
+
+        impl<'r> Responder<'r> for $name {
+            fn respond_to(self, req: &Request) -> ::std::result::Result<Response<'r>, Status> {
+                let json = serde_json::to_string(&self).expect("failed to encode");
+                json.respond_to(req)
+            }
+        }
+    };
+}
+
+response! {
+    name: GetTokenResponse,
+    fields: {
+        pub token: String,
+    },
+}
+
 #[post("/token")]
-pub fn get_token(auth: Result<auth::Basic>, conn: SolDbConn) -> ApiResult<Data> {
+pub fn get_token(auth: Result<auth::Basic>, conn: SolDbConn) -> ApiResult<GetTokenResponse> {
     let user = auth?.user();
     let token = Token::new_user_token(&user);
-    let res = Token::insert(&token, &conn)
-        .map(|_count| Data::new("got user token", json!({"token": token.token})))?;
+    let res = Token::insert(&token, &conn).map(|_count| GetTokenResponse { token: token.token })?;
     Ok(res)
 }
 

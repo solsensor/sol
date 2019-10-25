@@ -1,4 +1,4 @@
-use crate::tests::util::test_client;
+use crate::{api::GetTokenResponse, tests::util::test_client};
 use rocket::http::{ContentType, Header, Status};
 
 macro_rules! assert_body_json {
@@ -30,8 +30,7 @@ mod user {
         let req = client.get("/api/users/all");
         let mut res = req.dispatch();
         assert_res_json!(res, Status::BadRequest, {
-            "status": "failure",
-            "message": "ApiError(missing token)",
+            "error": "ApiError(missing token)",
         });
     }
 
@@ -40,8 +39,7 @@ mod user {
         let client = test_client();
         let mut res = client.post("/api/token").dispatch();
         assert_res_json!(res, Status::BadRequest, {
-            "status": "failure",
-            "message": "ApiError(missing basic auth header)",
+            "error": "ApiError(missing basic auth header)",
         });
     }
 
@@ -65,9 +63,8 @@ mod user {
             .header(basic_auth_header("newuser@gmail.com", "mypassword"))
             .body(json!({"email": "newuser@gmail.com", "password": "mypassword"}).to_string())
             .dispatch();
-        assert_res_json!(res, Status::Ok, {
-            "status": "success",
-            "message": "got user token",
-        });
+        let contents = res.body_string().expect("no body");
+        let res: GetTokenResponse = serde_json::from_str(&contents).expect("failed to deserialize");
+        assert_eq!(&res.token[..5], "user-");
     }
 }

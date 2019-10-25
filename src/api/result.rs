@@ -30,11 +30,7 @@ impl<E: Into<BaseError>> From<E> for Error {
 impl<'r> Responder<'r> for Error {
     fn respond_to(self, _: &Request) -> ::std::result::Result<Response<'r>, Status> {
         // Create JSON response
-        let resp = json!({
-            "status": "failure",
-            "message": self.to_string(),
-        })
-        .to_string();
+        let resp = json!({"error": self.to_string()}).to_string();
 
         // Respond. The `Ok` here is a bit of a misnomer. It means we
         // successfully created an error response
