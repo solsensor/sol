@@ -44,6 +44,28 @@ fn create_user_get_token() {
 }
 
 #[test]
+fn create_user_duplicate_email() {
+    let client = test_client();
+    register(&client, "newuser@gmail.com", "mypassword");
+    let mut res = client
+        .post("/api/users/new")
+        .header(ContentType::JSON)
+        .body(json_string!({"email": "newuser@gmail.com", "password": "otherpassword"}))
+        .dispatch();
+    let data = response_json_value(&mut res);
+    let error = data
+        .get("error")
+        .expect("response should have 'error' field")
+        .as_str()
+        .expect("should be str");
+    assert_eq!(
+        error,
+        "ApiError(user with email 'newuser@gmail.com' already exists)"
+    );
+    assert_eq!(res.status(), Status::BadRequest);
+}
+
+#[test]
 fn add_one_sensor() {
     let client = test_client();
     register(&client, "newuser@gmail.com", "mypassword");
