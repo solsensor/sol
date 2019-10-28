@@ -11,114 +11,27 @@
     - raw: apt-get install -y python-simplejson
 
   tasks:
-    - name: Upgrade system
-      tags: [ provision ]
-      apt: upgrade=dist update_cache=yes
 
-    - name: Install nginx
-      tags: [ provision ]
-      apt: name=nginx state=latest
+    - name: include role with common setup tasks
+      include_role:
+        name: common
 
-    - name: install letsencrypt
-      tags: [ provision ]
-      apt: name=letsencrypt state=latest
+    - name: include role for configuring nginx https reverse-proxy
+      include_role:
+        name: https-proxy
+      vars:
+        domain_name: '{{ domain_name }}'
+        letsencrypt_email: '{{ letsencrypt_email }}'
+        proxy_port: 8000
 
-    - name: create letsencrypt directory
-      tags: [ provision ]
-      file: name=/var/www/letsencrypt state=directory
-
-    - name: Remove default nginx config
-      tags: [ provision ]
-      file: name=/etc/nginx/sites-enabled/default state=absent
-
-    - name: Install system nginx config
-      tags: [ provision ]
-      template:
-        src: templates/nginx.conf.j2
-        dest: /etc/nginx/nginx.conf
-
-    - name: Install nginx site for letsencrypt requests
-      tags: [ provision ]
-      template:
-        src: templates/nginx-http.j2
-        dest: /etc/nginx/sites-enabled/http
-
-    - name: Reload nginx to activate letsencrypt site
-      tags: [ provision ]
-      service: name=nginx state=restarted
-
-    - name: Create letsencrypt certificate
-      tags: [ provision ]
-      shell: letsencrypt certonly -n --webroot -w /var/www/letsencrypt -m {{ letsencrypt_email }} --agree-tos -d {{ domain_name }}
-      args:
-        creates: /etc/letsencrypt/live/{{ domain_name }}
-
-    - name: Generate dhparams
-      tags: [ provision ]
-      shell: openssl dhparam -out /etc/nginx/dhparams.pem 2048
-      args:
-        creates: /etc/nginx/dhparams.pem
-
-    - name: Install nginx site for specified site
-      tags: [ provision ]
-      template:
-        src: templates/nginx-le.j2
-        dest: /etc/nginx/sites-enabled/le
-
-    - name: Reload nginx to activate specified site
-      tags: [ provision ]
-      service: name=nginx state=restarted
-
-    - name: Add letsencrypt cronjob for cert renewal
-      tags: [ provision ]
-      cron:
-        name: letsencrypt_renewal
-        special_time: weekly
-        job: letsencrypt --renew certonly -n --webroot -w /var/www/letsencrypt -m {{ letsencrypt_email }} --agree-tos -d {{ domain_name }} && service nginx reload
-
-    - name: Ensure dependencies installed
-      tags: [ install ]
-      apt:
-        name: '{{ item }}'
-        state: latest
-        update_cache: true
-      with_items:
-        - gcc
-        - sqlite3
-        - libsqlite3-dev
-
-    - name: install rustup
-      tags: [ install ]
-      shell: 'curl https://sh.rustup.rs -sSf | sh -s -- -y'
-
-    - name: install rust nightly
-      tags: [ install ]
-      shell: /root/.cargo/bin/rustup install nightly
-
-    - name: Checkout latest master from solsensor/sol repo
+    - name: include role for building sol from source
       tags: [ deploy ]
-      git:
-        dest: /sol
-        repo: https://github.com/solsensor/sol
-        version: master
+      include_role:
+        name: sol-build
 
-    - name: set rust nightly override
+    - name: include role for running sol service
       tags: [ deploy ]
-      shell: 'cd /sol && /root/.cargo/bin/rustup override set nightly'
-
-    - name: build sol
-      tags: [ deploy ]
-      shell: cd /sol && /root/.cargo/bin/cargo build --release
-
-    - name: Create systemd unit file
-      tags: [ deploy ]
-      template:
-        src: templates/sol.service.j2
-        dest: /etc/systemd/system/sol.service
-
-    - name: Restart sol service
-      tags: [ deploy ]
-      systemd:
-        name: sol
-        daemon_reload: true
-        state: restarted
+      include_role:
+        name: sol-service
+      vars:
+        sol_binary_path: '{{ sol_binary_path }}'

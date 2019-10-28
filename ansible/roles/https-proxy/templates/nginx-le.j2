@@ -30,6 +30,6 @@ server {
     index index.html index.htm;
 
     location / {
-        proxy_pass http://localhost:8000/;
+        proxy_pass http://localhost:{{ proxy_port }}/;
     }
 }

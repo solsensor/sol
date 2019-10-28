@@ -1,0 +1,38 @@
+
+- name: build dependencies installed
+  apt:
+    name: '{{ item }}'
+    state: latest
+    update_cache: true
+  with_items:
+    - gcc
+    - sqlite3  # TODO break this into separate role
+    - libsqlite3-dev
+
+- name: rustup installed
+  shell: 'curl https://sh.rustup.rs -sSf | sh -s -- -y'
+
+- name: rust nightly installed
+  shell: '/root/.cargo/bin/rustup install nightly'
+
+- name: solsensor/sol master branch checked out
+  git:
+    dest: /sol
+    repo: https://github.com/solsensor/sol
+    version: master
+
+- name: rust nightly override set
+  shell: 'cd /sol && /root/.cargo/bin/rustup override set nightly'
+
+- name: sol binary built
+  shell: 'cd /sol && /root/.cargo/bin/cargo build --release'
+
+- name: sol binary moved out of target dir
+  copy:
+    src: /sol/target/release/sol
+    dest: /sol/sol
+    remote_src: true
+
+- name: save binary location
+  set_fact:
+    sol_binary_path: /sol/sol
