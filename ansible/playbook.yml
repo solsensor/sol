@@ -17,6 +17,7 @@
         name: common
 
     - name: include role for configuring nginx https reverse-proxy
+      tags: [ provision ]
       include_role:
         name: https-proxy
       vars:
@@ -33,5 +34,3 @@
       tags: [ deploy ]
       include_role:
         name: sol-service
-      vars:
-        sol_binary_path: '{{ sol_binary_path }}'

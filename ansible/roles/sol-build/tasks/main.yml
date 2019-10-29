@@ -1,13 +1,12 @@
 
 - name: build dependencies installed
   apt:
-    name: '{{ item }}'
+    name:
+      - gcc
+      - sqlite3  # TODO break this into separate role
+      - libsqlite3-dev
     state: latest
     update_cache: true
-  with_items:
-    - gcc
-    - sqlite3  # TODO break this into separate role
-    - libsqlite3-dev
 
 - name: rustup installed
   shell: 'curl https://sh.rustup.rs -sSf | sh -s -- -y'
@@ -32,6 +31,7 @@
     src: /sol/target/release/sol
     dest: /sol/sol
     remote_src: true
+    mode: 777
 
 - name: save binary location
   set_fact:

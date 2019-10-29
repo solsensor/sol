@@ -9,3 +9,26 @@
     name: sol
     state: restarted
     daemon_reload: true
+
+- name: query api version endpoint
+  uri:
+    url: 'https://{{ domain_name }}/api/version'
+    method: GET
+  register: sol_api_version
+
+- name: get local git rev
+  delegate_to: localhost
+  become: false
+  shell: 'git rev-parse @ | head -c 7'
+  register: local_git_rev
+
+- debug:
+    var: sol_api_version
+
+- debug:
+    var: local_git_rev
+
+- name: assert new version of api is up
+  assert:
+    that:
+      - 'sol_api_version.json.version == local_git_rev.stdout'
