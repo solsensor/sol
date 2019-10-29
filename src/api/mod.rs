@@ -1,7 +1,10 @@
 use crate::{
     auth,
     db::SolDbConn,
-    models::{Reading, ReadingInsert, ReadingQueryUnix, Sensor, SensorInsert, Token, User},
+    models::{
+        Energy, Reading, ReadingInsert, ReadingQueryUnix, Sensor, SensorInsert, Token, User,
+        UserQuery,
+    },
     result::{Error, Result},
 };
 use chrono::NaiveDateTime;
@@ -10,7 +13,7 @@ use rocket::{get, http::RawStr, post, request::FromFormValue};
 use rocket_contrib::json::Json;
 
 mod res;
-use self::res::{Data, Message};
+use self::res::Data;
 
 pub(crate) mod result;
 use self::result::Result as ApiResult;
@@ -21,17 +24,29 @@ pub struct Register {
     password: String,
 }
 
+#[derive(Serialize)]
+pub struct AddUserResponse {}
+
 #[post("/users/new", format = "application/json", data = "<user>")]
-pub fn add_user(user: Json<Register>, conn: SolDbConn) -> ApiResult<Message> {
+pub fn add_user(user: Json<Register>, conn: SolDbConn) -> ApiResult<Json<AddUserResponse>> {
     User::insert(user.0.email, user.0.password, &conn)?;
-    Ok(Message::new("successfully created user"))
+    Ok(Json(AddUserResponse {}))
+}
+
+#[derive(Serialize)]
+pub struct GetUsersResponse {
+    pub users: Vec<UserQuery>,
 }
 
 #[get("/users/all")]
-pub fn get_users(conn: SolDbConn, admin: Result<auth::AdminToken>) -> ApiResult<Data> {
+pub fn get_users(
+    conn: SolDbConn,
+    admin: Result<auth::AdminToken>,
+) -> ApiResult<Json<GetUsersResponse>> {
     admin?;
-    let res =
-        User::all(&conn).map(|users| Data::new("found all users", json!({ "users": users })))?;
+    let res = User::all(&conn)
+        .map(|users| GetUsersResponse { users })
+        .map(Json)?;
     Ok(res)
 }
 
@@ -56,10 +71,16 @@ impl<'de> serde::Deserialize<'de> for UnixEpochTime {
     }
 }
 
+#[derive(Serialize)]
+pub struct GetEnergyStatsResponse {
+    pub stats: Vec<Energy>,
+}
+
 #[get("/sensor/<id>/energy_stats")]
-pub fn get_energy_stats(id: i32, conn: SolDbConn) -> ApiResult<Data> {
-    let stats = Sensor::energy_stats(id, &conn)?;
-    let res = Data::new("retrieved energy stats", json!({ "stats": stats }));
+pub fn get_energy_stats(id: i32, conn: SolDbConn) -> ApiResult<Json<GetEnergyStatsResponse>> {
+    let res = Sensor::energy_stats(id, &conn)
+        .map(|stats| GetEnergyStatsResponse { stats })
+        .map(Json)?;
     Ok(res)
 }
 
@@ -91,20 +112,24 @@ pub struct SensorHardwareId {
     hardware_id: i64,
 }
 
+#[derive(Serialize)]
+pub struct GetSensorTokenResponse {
+    pub token: String,
+}
+
 #[post("/sensor_token", format = "application/json", data = "<sensor_hw_id>")]
 pub fn get_sensor_token(
     auth: auth::UserToken,
     conn: SolDbConn,
     sensor_hw_id: Json<SensorHardwareId>,
-) -> ApiResult<Data> {
+) -> ApiResult<Json<GetSensorTokenResponse>> {
     let user = auth.user();
     let hardware_id = sensor_hw_id.0.hardware_id;
     let sensor = Sensor::find_by_hardware_id(hardware_id, &conn)?;
     if user.id == sensor.owner_id {
         let token = Token::new_sensor_token(sensor);
-        let res = Token::insert(&token, &conn)
-            .map(|_count| Data::new("got sensor token", json!({"token": token.token})))?;
-        Ok(res)
+        Token::insert(&token, &conn)?;
+        Ok(Json(GetSensorTokenResponse { token: token.token }))
     } else {
         Err(Error::NotSensorOwner.into())
     }
@@ -121,12 +146,15 @@ pub struct CreateReading {
     batt_V: f32,
 }
 
+#[derive(Serialize)]
+pub struct AddReadingResponse {}
+
 #[post("/add_reading", format = "application/json", data = "<reading>")]
 pub fn add_reading(
     auth: auth::SensorToken,
     conn: SolDbConn,
     reading: Json<CreateReading>,
-) -> ApiResult<Message> {
+) -> ApiResult<Json<AddReadingResponse>> {
     let reading = ReadingInsert {
         sensor_id: auth.sensor().id,
         timestamp: reading.0.timestamp.0,
@@ -136,17 +164,19 @@ pub fn add_reading(
         temp_celsius: reading.0.temp_celsius,
         batt_V: reading.0.batt_V,
     };
-    let res =
-        Reading::insert(&reading, &conn).map(|_| Message::new("successfully added reading"))?;
-    Ok(res)
+    Reading::insert(&reading, &conn)?;
+    Ok(Json(AddReadingResponse {}))
 }
+
+#[derive(Serialize)]
+pub struct AddReadingsResponse {}
 
 #[post("/add_readings", format = "application/json", data = "<readings>")]
 pub fn add_readings(
     auth: auth::SensorToken,
     conn: SolDbConn,
     readings: Json<Vec<CreateReading>>,
-) -> ApiResult<Message> {
+) -> ApiResult<Json<AddReadingsResponse>> {
     let sensor_id = auth.sensor().id;
     let readings = readings
         .0
@@ -161,9 +191,8 @@ pub fn add_readings(
             batt_V: r.batt_V,
         })
         .collect();
-    let res = Reading::insert_many(&readings, &conn)
-        .map(|_| Message::new("successfully added readings"))?;
-    Ok(res)
+    Reading::insert_many(&readings, &conn)?;
+    Ok(Json(AddReadingsResponse {}))
 }
 
 #[derive(Serialize, Deserialize, PartialEq)]
@@ -185,7 +214,7 @@ pub struct CreateSensor {
     hardware_id: i64,
 }
 
-#[derive(Serialize, Deserialize, PartialEq)]
+#[derive(Serialize)]
 pub struct AddSensorResponse {}
 
 #[post("/add_sensor", format = "application/json", data = "<data>")]
@@ -203,7 +232,7 @@ pub fn add_sensor(
     Ok(Json(AddSensorResponse {}))
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize)]
 pub struct GetVersionResponse {
     pub version: String,
 }
