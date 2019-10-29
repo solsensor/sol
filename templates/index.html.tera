@@ -31,13 +31,13 @@
 	<div class="level-item has-text-centered">
 	  <div>
 		<p class="heading">Sensors Deployed</p>
-		<p class="title">123.45</p>
+		<p class="title">{{sensor_count}}</p>
 	  </div>
 	</div>
 	<div class="level-item has-text-centered">
 	  <div>
 		<p class="heading">Readings Taken</p>
-		<p class="title">987.65M</p>
+		<p class="title">{{reading_count}}</p>
 	  </div>
 	</div>
 	<div class="level-item has-text-centered">

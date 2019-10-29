@@ -26,6 +26,8 @@ pub struct TemplateCtx {
     sensors: Option<Vec<SensorQuery>>,
     sensor: Option<SensorQuery>,
     readings: Option<Vec<ReadingQuery>>,
+    reading_count: Option<i64>,
+    sensor_count: Option<i64>,
 }
 
 impl<'a, 'r> FromRequest<'a, 'r> for TemplateCtx {
@@ -50,15 +52,22 @@ impl<'a, 'r> FromRequest<'a, 'r> for TemplateCtx {
             sensors: None,
             sensor: None,
             readings: None,
+            reading_count: None,
+            sensor_count: None,
         };
         Outcome::Success(ctx)
     }
 }
 
 #[get("/")]
-pub fn index(mut ctx: TemplateCtx) -> Template {
+pub fn index(mut ctx: TemplateCtx, conn: SolDbConn) -> WebResult<Template> {
+    let sensor_count = Sensor::count(&conn)?;
+    let reading_count = Reading::count(&conn)?;
+
     ctx.title = Some("Home".into());
-    Template::render("index", ctx)
+    ctx.reading_count = Some(reading_count);
+    ctx.sensor_count = Some(sensor_count);
+    Ok(Template::render("index", ctx))
 }
 
 #[get("/users")]

@@ -76,6 +76,14 @@ impl From<ReadingQuery> for ReadingQueryUnix {
 pub struct Reading;
 
 impl Reading {
+    pub fn count(conn: &SqliteConnection) -> Result<i64> {
+        use super::schema::readings::dsl::readings as all_readings;
+        use diesel::dsl::count_star;
+
+        let count: i64 = all_readings.select(count_star()).first(conn)?;
+        Ok(count)
+    }
+
     pub fn insert(reading: &ReadingInsert, conn: &SqliteConnection) -> Result<usize> {
         use super::schema::readings::table as readings_table;
         insert_into(readings_table)
@@ -336,6 +344,14 @@ pub struct SensorQuery {
 pub struct Sensor;
 
 impl Sensor {
+    pub fn count(conn: &SqliteConnection) -> Result<i64> {
+        use super::schema::sensors::dsl::sensors as all_sensors;
+        use diesel::dsl::count_star;
+
+        let count: i64 = all_sensors.select(count_star()).first(conn)?;
+        Ok(count)
+    }
+
     pub fn find(id: i32, conn: &SqliteConnection) -> Result<SensorQuery> {
         use super::schema::sensors::dsl::{
             active as sensor_active, id as sensor_id, sensors as all_sensors,
