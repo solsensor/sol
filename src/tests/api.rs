@@ -1,8 +1,7 @@
 use crate::{
     json_string,
     tests::util::{
-        add_sensor, basic_auth_header, get_token, register, response_json_value, test_client,
-        token_auth_header,
+        add_sensor, get_token, register, response_json_value, test_client, token_auth_header,
     },
 };
 use rocket::http::{ContentType, Status};
@@ -61,6 +60,25 @@ fn create_user_duplicate_email() {
         error,
         "ApiError(user with email 'newuser@gmail.com' already exists)"
     );
+    assert_eq!(res.status(), Status::BadRequest);
+}
+
+#[test]
+fn create_user_invalid_email() {
+    let client = test_client();
+    register(&client, "newuser@", "mypassword");
+    let mut res = client
+        .post("/api/users/new")
+        .header(ContentType::JSON)
+        .body(json_string!({"email": "newuser@gmail.com", "password": "otherpassword"}))
+        .dispatch();
+    let data = response_json_value(&mut res);
+    let error = data
+        .get("error")
+        .expect("response should have 'error' field")
+        .as_str()
+        .expect("should be str");
+    assert_eq!(error, "ApiError(invalid email 'newuser@')");
     assert_eq!(res.status(), Status::BadRequest);
 }
 
