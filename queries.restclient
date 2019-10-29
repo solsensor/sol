@@ -113,3 +113,9 @@ GET :root/api/sensor/1/readings?start=1448210420&end=1648220420
 #
 
 GET :root/api/sensor/1/readings?start=1448210420&end=1648220420&unixtime=true
+
+#
+# Get version
+#
+
+GET :root/api/version

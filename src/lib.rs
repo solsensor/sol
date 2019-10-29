@@ -17,6 +17,7 @@ extern crate serde_derive;
 extern crate diesel;
 #[macro_use]
 extern crate diesel_migrations;
+extern crate git_version;
 extern crate serde_json;
 
 mod api;
@@ -132,6 +133,7 @@ fn rocket(db_uri: &str, quiet: bool) -> Rocket {
                 api::add_readings,
                 api::get_readings,
                 api::get_energy_stats,
+                api::get_version,
             ],
         )
         .mount("/static", routes![files])

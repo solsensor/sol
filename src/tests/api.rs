@@ -1,5 +1,4 @@
 use crate::{
-    api::{AddSensorResponse, GetTokenResponse},
     json_string,
     tests::util::{
         add_sensor, basic_auth_header, get_token, register, response_json_value, test_client,

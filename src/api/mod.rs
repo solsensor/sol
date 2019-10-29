@@ -5,6 +5,7 @@ use crate::{
     result::{Error, Result},
 };
 use chrono::NaiveDateTime;
+use git_version::git_version;
 use rocket::{get, http::RawStr, post, request::FromFormValue};
 use rocket_contrib::json::Json;
 
@@ -200,4 +201,18 @@ pub fn add_sensor(
     };
     Sensor::insert(&sensor, &conn)?;
     Ok(Json(AddSensorResponse {}))
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct GetVersionResponse {
+    pub version: String,
+}
+
+const GIT_VERSION: &str = git_version!();
+
+#[get("/version")]
+pub fn get_version() -> ApiResult<Json<GetVersionResponse>> {
+    Ok(Json(GetVersionResponse {
+        version: GIT_VERSION.to_string(),
+    }))
 }
