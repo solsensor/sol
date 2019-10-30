@@ -300,5 +300,5 @@ pub fn login_onetime(token: String, conn: SolDbConn, mut cookies: Cookies) -> We
     let token = Token::new_user_token(&user);
     Token::insert(&token, &conn)?;
     cookies.add_private(Cookie::build("user_token", token.token).path("/").finish());
-    Ok(Redirect::to(uri!(user: user.email)))
+    Ok(Redirect::to(uri!(change_password)))
 }
