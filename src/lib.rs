@@ -18,6 +18,8 @@ extern crate diesel;
 #[macro_use]
 extern crate diesel_migrations;
 extern crate git_version;
+extern crate rusoto_core;
+extern crate rusoto_ses;
 extern crate serde_json;
 
 mod api;

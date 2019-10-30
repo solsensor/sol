@@ -5,6 +5,8 @@ use rocket::{
     request::Request,
     response::{Responder, Response},
 };
+use rusoto_core::RusotoError;
+use rusoto_ses::SendEmailError;
 use std::{convert::From, fmt};
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -24,6 +26,8 @@ pub enum Error {
     NoTokenInRequest,
     NotAdmin,
     DbConnectionFailed,
+    SendEmail(SendEmailError),
+    UnknownError(String),
 }
 
 impl fmt::Display for Error {
@@ -44,6 +48,8 @@ impl fmt::Display for Error {
             Error::NoTokenInRequest => "failed to get auth token from request".into(),
             Error::NotAdmin => "user is not an admin".into(),
             Error::DbConnectionFailed => "failed to connect to the database".into(),
+            Error::SendEmail(e) => format!("failed to send email: {}", e),
+            Error::UnknownError(e) => format!("unknown error: {}", e),
         };
         write!(f, "{}", msg)
     }
@@ -52,6 +58,15 @@ impl fmt::Display for Error {
 impl From<DieselError> for Error {
     fn from(e: DieselError) -> Self {
         Error::Diesel(e)
+    }
+}
+
+impl From<RusotoError<SendEmailError>> for Error {
+    fn from(e: RusotoError<SendEmailError>) -> Self {
+        match e {
+            RusotoError::Service(se) => Error::SendEmail(se),
+            ue => Error::UnknownError(format!("{}", ue)),
+        }
     }
 }
 

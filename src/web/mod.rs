@@ -12,6 +12,8 @@ use rocket::{
     Outcome, Request,
 };
 use rocket_contrib::templates::Template;
+use rusoto_core::{region::Region, RusotoFuture};
+use rusoto_ses::{Body, Content, Destination, Message, SendEmailRequest, Ses, SesClient};
 
 pub(crate) mod result;
 use self::result::Result as WebResult;
@@ -230,8 +232,38 @@ pub fn forgot_password(mut ctx: TemplateCtx) -> Template {
 
 #[post("/forgot_password", data = "<form>")]
 pub fn forgot_password_post(form: Form<Email>, conn: SolDbConn) -> WebResult<Flash<Redirect>> {
-    let user = User::by_email(&form.0.email, &conn)?;
-    onetime_login::create(user.id, &conn)?;
+    let email = &form.0.email;
+    let user = User::by_email(email, &conn)?;
+    let token = onetime_login::create(user.id, &conn)?;
+
+    RusotoFuture::sync(SesClient::new(Region::UsEast1).send_email(SendEmailRequest {
+        configuration_set_name: None,
+        destination: Destination {
+            bcc_addresses: None,
+            cc_addresses: None,
+            to_addresses: Some(vec![email.to_string()]),
+        },
+        message: Message {
+            subject: Content {
+                charset: None,
+                data: "Password reset".to_string(),
+            },
+            body: Body {
+                text: None,
+                html: Some(Content {
+                    charset: None,
+                    data: format!("<html><body>Reset password at this link: <a href=\"https://dev.solsensor.com/login/onetime/{}\">Reset Password</a></body></html>", token),
+                }),
+            },
+        },
+        reply_to_addresses: None,
+        return_path: None,
+        return_path_arn: None,
+        source: "no-reply@solsensor.com".to_string(),
+        source_arn: None,
+        tags: None,
+    }))?;
+
     Ok(Flash::success(
         Redirect::to("/forgot_password"),
         "temporary password has been emailed",
