@@ -62,14 +62,33 @@ impl<'a, 'r> FromRequest<'a, 'r> for TemplateCtx {
 }
 
 #[get("/")]
-pub fn index(mut ctx: TemplateCtx, conn: SolDbConn) -> WebResult<Template> {
+pub fn index(user: Result<auth::UserCookie>) -> Redirect {
+    match user {
+        Ok(_) => Redirect::to(uri!(dashboard)),
+        Err(_) => Redirect::to(uri!(landing)),
+    }
+}
+
+#[get("/dashboard")]
+pub fn dashboard(mut ctx: TemplateCtx, conn: SolDbConn) -> WebResult<Template> {
+    let sensor_count = Sensor::count(&conn)?;
+    let reading_count = Reading::count(&conn)?;
+
+    ctx.title = Some("Dashboard".into());
+    ctx.reading_count = Some(reading_count);
+    ctx.sensor_count = Some(sensor_count);
+    Ok(Template::render("dashboard", ctx))
+}
+
+#[get("/landing")]
+pub fn landing(mut ctx: TemplateCtx, conn: SolDbConn) -> WebResult<Template> {
     let sensor_count = Sensor::count(&conn)?;
     let reading_count = Reading::count(&conn)?;
 
     ctx.title = Some("Home".into());
     ctx.reading_count = Some(reading_count);
     ctx.sensor_count = Some(sensor_count);
-    Ok(Template::render("index", ctx))
+    Ok(Template::render("landing", ctx))
 }
 
 #[get("/users")]

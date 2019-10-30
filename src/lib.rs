@@ -103,6 +103,8 @@ fn rocket(db_uri: &str, quiet: bool) -> Rocket {
             "/",
             routes![
                 web::index,
+                web::dashboard,
+                web::landing,
                 web::users,
                 web::user,
                 web::user_edit,
