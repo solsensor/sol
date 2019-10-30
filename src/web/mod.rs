@@ -92,11 +92,16 @@ pub fn landing(mut ctx: TemplateCtx, conn: SolDbConn) -> WebResult<Template> {
 }
 
 #[get("/users")]
-pub fn users(mut ctx: TemplateCtx, conn: SolDbConn, _user: auth::UserCookie) -> Template {
+pub fn users(
+    mut ctx: TemplateCtx,
+    conn: SolDbConn,
+    auth: Result<auth::UserCookie>,
+) -> WebResult<Template> {
+    auth?;
     let users = User::all(&conn).ok();
     ctx.title = Some(String::from("Users"));
     ctx.users = users;
-    Template::render("users", &ctx)
+    Ok(Template::render("users", &ctx))
 }
 
 #[get("/user/<email>")]
@@ -115,8 +120,9 @@ pub fn user_edit(
     mut ctx: TemplateCtx,
     email: String,
     conn: SolDbConn,
-    _auth: auth::UserCookie,
+    auth: Result<auth::UserCookie>,
 ) -> WebResult<Template> {
+    auth?;
     let user = User::by_email(&email, &conn)?;
     ctx.title = Some(format!("{} | edit", email));
     ctx.user = Some(user);
@@ -130,11 +136,12 @@ pub struct UserEdit {
 
 #[post("/user/<email>/edit", data = "<form>")]
 pub fn user_edit_post(
-    auth: auth::UserCookie,
+    auth: Result<auth::UserCookie>,
     form: Form<UserEdit>,
     email: String,
     conn: SolDbConn,
 ) -> WebResult<Flash<Redirect>> {
+    let auth = auth?;
     let user = User::by_email(&email, &conn)?;
     let editor = auth.user();
     if user.id != editor.id && !editor.superuser {
@@ -169,8 +176,9 @@ pub fn sensor_edit(
     mut ctx: TemplateCtx,
     id: i32,
     conn: SolDbConn,
-    _auth: auth::UserCookie,
+    auth: Result<auth::UserCookie>,
 ) -> WebResult<Template> {
+    auth?;
     let sensor = Sensor::find(id, &conn)?;
     ctx.title = Some(format!("sensor {} | edit", id));
     ctx.sensor = Some(sensor);
@@ -185,11 +193,12 @@ pub struct SensorEdit {
 
 #[post("/sensor/<id>/edit", data = "<form>")]
 pub fn sensor_edit_post(
-    auth: auth::UserCookie,
+    auth: Result<auth::UserCookie>,
     form: Form<SensorEdit>,
     id: i32,
     conn: SolDbConn,
 ) -> WebResult<Flash<Redirect>> {
+    let auth = auth?;
     let sensor = Sensor::find(id, &conn)?;
     if sensor.owner_id != auth.user().id {
         return Ok(Flash::error(
@@ -214,7 +223,8 @@ pub fn login(mut ctx: TemplateCtx) -> Template {
 }
 
 #[get("/change_password")]
-pub fn change_password(mut ctx: TemplateCtx, _user: auth::UserCookie) -> Template {
+pub fn change_password(mut ctx: TemplateCtx, auth: auth::UserCookie) -> WebResult<Template> {
+    auth?;
     ctx.title = Some(String::from("Change Password"));
     Template::render("change_password", &ctx)
 }
@@ -231,7 +241,7 @@ pub fn change_password_post(
     auth: auth::UserCookie,
     mut cookies: Cookies,
 ) -> WebResult<Redirect> {
-    let user = auth.user();
+    let user = auth?.user();
     let pwd = form.into_inner().password;
     User::update_password(user.id, pwd, &conn)?;
     cookies.remove_private(Cookie::named("user_token"));
