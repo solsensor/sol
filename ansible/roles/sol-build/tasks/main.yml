@@ -5,6 +5,8 @@
       - gcc
       - sqlite3  # TODO break this into separate role
       - libsqlite3-dev
+      - libssl-dev
+      - pkg-config
     state: latest
     update_cache: true
 
