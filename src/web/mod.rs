@@ -240,7 +240,7 @@ pub fn forgot_password_post(
     let user = User::by_email(email, &conn)?;
     let token = onetime_login::create(user.id, &conn)?;
 
-    emailer?.send("ryan@ryanchpman.com", "Password Reset", &format!("<html><body>Reset password at this link: <a href=\"https://dev.solsensor.com/login/onetime/{}\">Reset Password</a></body></html>", token))?;
+    emailer?.send("ryan@ryanchipman.com", "Password Reset", &format!("<html><body>Reset password at this link: <a href=\"https://dev.solsensor.com/login/onetime/{}\">Reset Password</a></body></html>", token))?;
 
     Ok(Flash::success(
         Redirect::to("/forgot_password"),

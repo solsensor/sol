@@ -36,7 +36,7 @@ impl Emailer {
             reply_to_addresses: None,
             return_path: None,
             return_path_arn: None,
-            source: "no-reply@solsensor.com".to_string(),
+            source: "devteam@solsensor.com".to_string(),
             source_arn: None,
             tags: None,
         }))?;
