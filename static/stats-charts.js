@@ -11,7 +11,7 @@ var spec = {
 	"description": "Sensor Data",
 	"data": {
 		"url": url,
-		"format": { "property": "data.stats" }
+		"format": { "property": "stats" }
 	},
 	"vconcat": [
 		{
