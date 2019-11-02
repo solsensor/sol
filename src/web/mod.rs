@@ -223,10 +223,13 @@ pub fn login(mut ctx: TemplateCtx) -> Template {
 }
 
 #[get("/change_password")]
-pub fn change_password(mut ctx: TemplateCtx, auth: auth::UserCookie) -> WebResult<Template> {
+pub fn change_password(
+    mut ctx: TemplateCtx,
+    auth: Result<auth::UserCookie>,
+) -> WebResult<Template> {
     auth?;
     ctx.title = Some(String::from("Change Password"));
-    Template::render("change_password", &ctx)
+    Ok(Template::render("change_password", &ctx))
 }
 
 #[derive(Deserialize, FromForm)]
@@ -238,7 +241,7 @@ pub struct Password {
 pub fn change_password_post(
     form: Form<Password>,
     conn: SolDbConn,
-    auth: auth::UserCookie,
+    auth: Result<auth::UserCookie>,
     mut cookies: Cookies,
 ) -> WebResult<Redirect> {
     let user = auth?.user();
