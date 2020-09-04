@@ -1,5 +1,4 @@
 #![feature(plugin)]
-#![feature(custom_attribute)]
 #![allow(proc_macro_derive_resolution_fallback)]
 #![feature(proc_macro_hygiene, decl_macro)]
 
