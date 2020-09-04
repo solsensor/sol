@@ -12,9 +12,9 @@
 
   tasks:
 
-    - name: include role with common setup tasks
-      include_role:
-        name: common
+    #- name: include role with common setup tasks
+    #  include_role:
+    #    name: common
 
     - name: include role for configuring nginx https reverse-proxy
       tags: [ provision ]
