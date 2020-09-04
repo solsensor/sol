@@ -358,7 +358,6 @@ impl Sensor {
         };
         all_sensors
             .filter(sensor_id.eq(id))
-            .filter(sensor_active.eq(true))
             .first(conn)
             .map_err(|e| e.into())
     }

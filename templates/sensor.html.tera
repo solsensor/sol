@@ -8,6 +8,7 @@
 
 	<div class="box">
 	  <p>id: {{sensor.id}}</p>
+	  <p>active: {{sensor.active}}</p>
 	  <p>owner_id: {{sensor.owner_id}}</p>
 	  <p>hardware_id: {{sensor.hardware_id}}</p>
 	  {% if current_user and current_user.id == sensor.owner_id %}<a href="/sensor/{{sensor.id}}/edit">Edit Sensor</a>{% endif %}
