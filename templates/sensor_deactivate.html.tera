@@ -1,0 +1,18 @@
+{% extends "base" %}
+{% block body %}
+<section class="section">
+  <div class="container">
+
+	<p class="title">Deactivate Sensor {{sensor.id}}</p>
+
+	  <div class="field">
+		<div class="control">
+		  <input class="button is-primary has-text-weight-bold" type="submit" value="Confirm">
+		</div>
+	  </div>
+	  </form>
+	</div>
+
+  </div>
+</section>
+{% endblock body %}

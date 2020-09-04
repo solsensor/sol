@@ -216,6 +216,43 @@ pub fn sensor_edit_post(
     ))
 }
 
+#[get("/sensor/<id>/deactivate")]
+pub fn sensor_deactivate(
+    mut ctx: TemplateCtx,
+    id: i32,
+    conn: SolDbConn,
+    auth: Result<auth::UserCookie>,
+) -> WebResult<Template> {
+    auth?;
+    let sensor = Sensor::find(id, &conn)?;
+    ctx.title = Some(format!("sensor {} | deactivate", id));
+    ctx.sensor = Some(sensor);
+    Ok(Template::render("sensor_deactivate", &ctx))
+}
+
+#[post("/sensor/<id>/deactivate")]
+pub fn sensor_deactivate_post(
+    auth: Result<auth::UserCookie>,
+    id: i32,
+    conn: SolDbConn,
+) -> WebResult<Flash<Redirect>> {
+    let auth = auth?;
+    let sensor = Sensor::find(id, &conn)?;
+    if sensor.owner_id != auth.user().id {
+        return Ok(Flash::error(
+            Redirect::to(uri!(sensor: id)),
+            "user does not own this sensor",
+        ));
+    }
+
+    Sensor::deactivate(&conn, id)?;
+
+    Ok(Flash::success(
+        Redirect::to(uri!(sensor: id)),
+        "successfully deactivated sensor",
+    ))
+}
+
 #[get("/login")]
 pub fn login(mut ctx: TemplateCtx) -> Template {
     ctx.title = Some(String::from("Login"));

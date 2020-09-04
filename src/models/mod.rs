@@ -353,9 +353,7 @@ impl Sensor {
     }
 
     pub fn find(id: i32, conn: &SqliteConnection) -> Result<SensorQuery> {
-        use super::schema::sensors::dsl::{
-            active as sensor_active, id as sensor_id, sensors as all_sensors,
-        };
+        use super::schema::sensors::dsl::{id as sensor_id, sensors as all_sensors};
         all_sensors
             .filter(sensor_id.eq(id))
             .first(conn)
@@ -420,6 +418,14 @@ impl Sensor {
             .values(sensor)
             .execute(conn)
             .map_err(|e| e.into())
+    }
+
+    pub fn deactivate(conn: &SqliteConnection, id: i32) -> Result<()> {
+        update(sensors::table.find(id))
+            .set(sensors::active.eq(false))
+            .execute(conn)
+            .map(|_| ())?;
+        Ok(())
     }
 
     pub fn energy_stats(sensor_id: i32, conn: &SqliteConnection) -> Result<Vec<Energy>> {
