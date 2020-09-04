@@ -121,6 +121,8 @@ fn rocket(db_uri: &str, quiet: bool) -> Rocket {
                 web::sensor,
                 web::sensor_edit,
                 web::sensor_edit_post,
+                web::sensor_deactivate,
+                web::sensor_deactivate_post,
                 set_flash,
             ],
         )

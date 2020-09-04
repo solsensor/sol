@@ -7,7 +7,9 @@
 
 	  <div class="field">
 		<div class="control">
-		  <input class="button is-primary has-text-weight-bold" type="submit" value="Confirm">
+		  <form method="post">
+		    <input class="button is-primary has-text-weight-bold" type="submit" value="Confirm">
+		  </form>
 		</div>
 	  </div>
 	  </form>

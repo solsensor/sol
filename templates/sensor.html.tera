@@ -13,7 +13,7 @@
 	  <p>hardware_id: {{sensor.hardware_id}}</p>
 	  {% if current_user and current_user.id == sensor.owner_id %}
 	    <a href="/sensor/{{sensor.id}}/edit">Edit Sensor</a>
-	    <a href="/sensor/{{sensor.id}}/deactivate">Deactivate Sensor</a>
+		{% if sensor.active %}<a href="/sensor/{{sensor.id}}/deactivate">Deactivate Sensor</a>{% endif %}
 	  {% endif %}
 	</div>
 
