@@ -2,3 +2,29 @@
 
 * Sol Tasks
 ** TODO Send current time back in readings POST response
+** DONE Figure out why solsensor.com is down
+   CLOSED: [2020-02-19 Wed 09:19] SCHEDULED: <2020-02-19 Wed>
+   :PROPERTIES:
+   :CREATED:  [2020-02-18 Tue 08:32]
+   :END:
+   :LOGBOOK:
+   - State "DONE"       from "TODO"       [2020-02-19 Wed 09:19] \\
+	 just needed to restart the process
+   CLOCK: [2020-02-19 Wed 09:17]--[2020-02-19 Wed 09:19] =>  0:02
+   - Rescheduled from "[2020-02-18 Tue]" on [2020-02-19 Wed 08:10]
+   :END:
+
+** TODO Request atlas credits for sol
+   :PROPERTIES:
+   :CREATED:  [2020-03-01 Sun 13:46]
+   :END:
+   :LOGBOOK:
+   - Note taken on [2020-03-01 Sun 13:46] \\
+	 [[https://docs.google.com/forms/d/1ZkUVH33E2W7TcGheqVcN1fajGvrmbNGf_-5CaIg2PWM/viewform?edit_requested=true][google form]]
+   :END:
+
+** TODO Use MongoDB rust driver in sol
+   :PROPERTIES:
+   :CREATED:  [2019-12-19 Thu 17:20]
+   :END:
+
